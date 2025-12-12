@@ -1,10 +1,16 @@
 {
-  "name": "yunqi-html-crawler",
+  "name": "twitter-auto-post",
   "version": "1.0.0",
-  "description": "Lấy HTML trang Yunqi bằng Node.js và axios",
-  "main": "getYunqiHtml.js",
+  "description": "Twitter Auto Post System with AI Content Generation",
+  "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "echo 'No build step required'",
+    "test": "node test-local.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "axios": "^1.13.2",

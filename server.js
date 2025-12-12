@@ -15,15 +15,17 @@ const cheerio = require('cheerio');
 // Removed OpenRouter - now using Google Gemini for AI features
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
+
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fsSync.existsSync(uploadDir)) {
+  fsSync.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, 'uploads');
-    if (!fsSync.existsSync(uploadDir)) {
-      fsSync.mkdirSync(uploadDir, { recursive: true });
-    }
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
@@ -1650,8 +1652,54 @@ async function postArticleToTwitter(article, config, options = {}) {
 
 
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
-  console.log(`📝 Quản lý Twitter: http://localhost:${PORT}/twitter`);
-  console.log(`📄 Xem DOCX: http://localhost:${PORT}/docx`);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ 
+    success: false, 
+    error: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message 
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>404 - Not Found</title>
+      <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        h1 { color: #1da1f2; }
+      </style>
+    </head>
+    <body>
+      <h1>404 - Page Not Found</h1>
+      <p>The page you're looking for doesn't exist.</p>
+      <a href="/">Go to Home</a> | <a href="/twitter">Twitter Manager</a>
+    </body>
+    </html>
+  `);
+});
+
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server đang chạy tại port ${PORT}`);
+  console.log(`📝 Quản lý Twitter: /twitter`);
+  console.log(`📄 Xem DOCX: /docx`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    console.log('Process terminated');
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  server.close(() => {
+    console.log('Process terminated');
+  });
 });

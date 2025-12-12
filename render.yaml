@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: twitter-auto-post
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+    # Environment variables cần được set thủ công trong Render Dashboard:
+    # API_KEY, API_KEY_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET, 
+    # BEARER_TOKEN, CLIENT_ID, CLIENT_SECRET, OPENROUTER_API_KEY
