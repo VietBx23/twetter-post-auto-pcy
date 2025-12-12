@@ -553,6 +553,9 @@
                 <button class="btn btn-success" onclick="testSchedule()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
                     <i class="fas fa-clock"></i> Test Lịch (1 phút)
                 </button>
+                <button class="btn btn-info" onclick="testImageUpload()" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                    <i class="fas fa-image"></i> Test Upload Ảnh
+                </button>
             </div>
             <div id="scheduledTweetsList">
                 <p style="text-align: center; color: #64748b; font-style: italic;">Nhấn "Tải lại danh sách" để xem các tweet đã lập lịch</p>
@@ -1721,6 +1724,42 @@
                 while (scheduled.getTime() <= Date.now()) scheduled.setDate(scheduled.getDate() + 1);
                 const el = document.getElementById(`sched-${i}`);
                 if (el) el.textContent = scheduled.toLocaleString();
+            }
+        }
+
+        // Test image upload function
+        async function testImageUpload() {
+            // Use a reliable test image URL
+            const testImageUrl = 'https://mtu.sltutu2025.com/网友自拍/hhlf89.jpg';
+            
+            if (!confirm(`🧪 Test upload ảnh từ URL?\n\nSẽ test upload ảnh từ:\n${testImageUrl}\n\nXác nhận tiếp tục?`)) {
+                return;
+            }
+
+            try {
+                showMessage('🧪 Đang test upload ảnh...', 'success');
+
+                const res = await fetch('/api/test/image-upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        imageUrl: testImageUrl
+                    })
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Test upload thất bại');
+                }
+
+                const resultMessage = `✅ Test upload ảnh thành công!\n\n📊 Chi tiết:\n• Media ID: ${data.mediaId}\n• Kích thước: ${Math.round(data.imageSize / 1024)} KB\n• MIME Type: ${data.mimeType}\n• URL test: ${testImageUrl}`;
+                
+                showMessage(resultMessage, 'success');
+                console.log('🧪 Test upload result:', data);
+
+            } catch (err) {
+                console.error('❌ Test upload error:', err);
+                showMessage('❌ Test upload thất bại: ' + err.message, 'error');
             }
         }
 

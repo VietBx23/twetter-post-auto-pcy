@@ -83,6 +83,98 @@ const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
 let scheduledTweets = [];
 let scheduledJobs = new Map();
 
+// Helper function to determine MIME type from response or URL
+function getMimeTypeFromResponse(response, url) {
+  let mimeType = 'image/jpeg'; // default
+  const contentType = response.headers['content-type'];
+  
+  if (contentType && contentType.startsWith('image/')) {
+    mimeType = contentType;
+    console.log(`🔍 MIME type from Content-Type header: ${mimeType}`);
+  } else {
+    // Guess from URL extension
+    const urlLower = url.toLowerCase();
+    if (urlLower.includes('.png')) mimeType = 'image/png';
+    else if (urlLower.includes('.gif')) mimeType = 'image/gif';
+    else if (urlLower.includes('.webp')) mimeType = 'image/webp';
+    else if (urlLower.includes('.bmp')) mimeType = 'image/bmp';
+    else if (urlLower.includes('.jpg') || urlLower.includes('.jpeg')) mimeType = 'image/jpeg';
+    
+    console.log(`🔍 MIME type from URL extension: ${mimeType} (URL: ${url})`);
+  }
+  
+  // Ensure we have a valid MIME type
+  if (!mimeType || !mimeType.startsWith('image/')) {
+    mimeType = 'image/jpeg';
+    console.log(`⚠️ Fallback to default MIME type: ${mimeType}`);
+  }
+  
+  return mimeType;
+}
+
+// Helper function to upload image buffer to Twitter (try both methods)
+async function uploadImageToTwitter(client, imageBuffer, mimeType, context = '') {
+  // Validate buffer
+  if (!Buffer.isBuffer(imageBuffer) || imageBuffer.length === 0) {
+    throw new Error('Invalid image buffer');
+  }
+  
+  console.log(`📤 Uploading image ${context}: ${mimeType}, ${imageBuffer.length} bytes`);
+  
+  // Method 1: Try direct buffer upload with correct Twitter API format
+  try {
+    console.log(`🔧 Buffer info ${context}: isBuffer=${Buffer.isBuffer(imageBuffer)}, length=${imageBuffer.length}, mimeType=${mimeType}`);
+    
+    // Twitter API v1 expects the media parameter to be a Buffer with mimeType option
+    const mediaId = await client.v1.uploadMedia(imageBuffer, { mimeType });
+    console.log(`✅ Đã upload ảnh trực tiếp (buffer) ${context}, Media ID:`, mediaId);
+    return mediaId;
+  } catch (bufferError) {
+    console.error(`❌ Buffer upload failed ${context}:`, bufferError.message);
+    console.error(`❌ Buffer error details:`, {
+      message: bufferError.message,
+      code: bufferError.code,
+      status: bufferError.status
+    });
+  }
+  
+  // Method 2: Fallback to temporary file method
+  let tempFilePath = null;
+  try {
+    // Determine file extension from MIME type
+    let extension = '.jpg';
+    if (mimeType.includes('png')) extension = '.png';
+    else if (mimeType.includes('gif')) extension = '.gif';
+    else if (mimeType.includes('webp')) extension = '.webp';
+    
+    // Create temporary file
+    const tempFileName = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 11)}${extension}`;
+    tempFilePath = path.join(uploadDir, tempFileName);
+    
+    // Write buffer to temporary file
+    await fs.writeFile(tempFilePath, imageBuffer);
+    
+    // Upload file to Twitter
+    const mediaId = await client.v1.uploadMedia(tempFilePath);
+    console.log(`✅ Đã upload ảnh qua file ${context}, Media ID:`, mediaId);
+    
+    return mediaId;
+  } catch (fileError) {
+    console.error(`❌ Cả 2 phương pháp upload đều thất bại ${context}:`, fileError.message);
+    throw new Error(`Upload failed ${context}: ${fileError.message}`);
+  } finally {
+    // Clean up temporary file
+    if (tempFilePath) {
+      try {
+        await fs.unlink(tempFilePath);
+        console.log(`🗑️ Đã xóa file tạm: ${path.basename(tempFilePath)}`);
+      } catch (cleanupError) {
+        console.warn(`⚠️ Không thể xóa file tạm: ${cleanupError.message}`);
+      }
+    }
+  }
+}
+
 // Load Twitter config
 async function loadConfig() {
   try {
@@ -294,17 +386,25 @@ async function postScheduledTweet(tweetData) {
   if (tweetData.imageUrls && tweetData.imageUrls.length > 0) {
     for (const url of tweetData.imageUrls.slice(0, 4)) {
       try {
-        console.log('⏳ Đang upload ảnh trực tiếp từ URL (scheduled):', url);
+        console.log('⏳ Đang tải ảnh từ URL (scheduled):', url);
         const response = await axios.get(url, {
           responseType: 'arraybuffer',
           timeout: 15000,
-          headers: { 'User-Agent': 'Mozilla/5.0' }
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          maxContentLength: 5 * 1024 * 1024 // 5MB limit
         });
 
-        // Upload directly to Twitter without saving to disk
-        const mediaId = await client.v1.uploadMedia(Buffer.from(response.data));
+        // Validate response
+        if (!response.data || response.data.length === 0) {
+          throw new Error('Empty response data');
+        }
+
+        console.log(`📥 Đã tải ảnh: ${response.data.length} bytes, Content-Type: ${response.headers['content-type']}`);
+
+        // Upload to Twitter
+        const mimeType = getMimeTypeFromResponse(response, url);
+        const mediaId = await uploadImageToTwitter(client, Buffer.from(response.data), mimeType, '(scheduled)');
         mediaIds.push(mediaId);
-        console.log('✅ Đã upload ảnh trực tiếp lên Twitter (scheduled), Media ID:', mediaId);
         
       } catch (error) {
         console.error('❌ Lỗi xử lý ảnh trong tweet lập lịch:', error);
@@ -966,6 +1066,65 @@ app.delete('/api/twitter/scheduled/:id', (req, res) => {
   }
 });
 
+// API: Test image upload
+app.post('/api/test/image-upload', async (req, res) => {
+  try {
+    const { imageUrl } = req.body;
+    
+    if (!imageUrl) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Vui lòng cung cấp imageUrl' 
+      });
+    }
+
+    const config = await loadConfig();
+    if (!hasTwitterKeys(config)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Chưa cấu hình khóa Twitter' 
+      });
+    }
+
+    const client = createTwitterClient(config);
+    
+    console.log('🧪 Test upload ảnh từ URL:', imageUrl);
+    
+    // Download image
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+      timeout: 15000,
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      maxContentLength: 5 * 1024 * 1024
+    });
+
+    if (!response.data || response.data.length === 0) {
+      throw new Error('Empty response data');
+    }
+
+    console.log(`📥 Test - Đã tải ảnh: ${response.data.length} bytes, Content-Type: ${response.headers['content-type']}`);
+
+    // Upload to Twitter
+    const mimeType = getMimeTypeFromResponse(response, imageUrl);
+    const mediaId = await uploadImageToTwitter(client, Buffer.from(response.data), mimeType, '(test)');
+    
+    res.json({
+      success: true,
+      mediaId: mediaId,
+      imageSize: response.data.length,
+      mimeType: mimeType,
+      message: 'Test upload ảnh thành công!'
+    });
+
+  } catch (error) {
+    console.error('❌ Test upload ảnh thất bại:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
 // API: Debug scheduled jobs
 app.get('/api/debug/jobs', (req, res) => {
   const jobsInfo = [];
@@ -1294,22 +1453,39 @@ app.post('/api/twitter/post', upload.array('images', 4), async (req, res) => {
         console.log('📋 Danh sách URL ảnh:', urls);
 
         for (const url of urls.slice(0, 4)) { // Limit to 4 images
-          console.log('⏳ Đang upload ảnh trực tiếp từ URL:', url);
+          console.log('⏳ Đang tải ảnh từ URL (main):', url);
           
           try {
             const response = await axios.get(url, {
               responseType: 'arraybuffer',
               timeout: 15000,
-              headers: { 'User-Agent': 'Mozilla/5.0' }
+              headers: { 
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'image/*,*/*;q=0.8'
+              },
+              maxContentLength: 5 * 1024 * 1024 // 5MB limit
             });
 
-            // Upload directly to Twitter without saving to disk
-            const mediaId = await client.v1.uploadMedia(Buffer.from(response.data));
+            // Validate response
+            if (!response.data || response.data.length === 0) {
+              throw new Error('Empty response data');
+            }
+
+            console.log(`📥 Đã tải ảnh (main): ${response.data.length} bytes, Content-Type: ${response.headers['content-type']}`);
+
+            // Upload to Twitter with enhanced error handling
+            const mimeType = getMimeTypeFromResponse(response, url);
+            console.log(`🔧 Preparing upload with MIME type: ${mimeType}`);
+            
+            const mediaId = await uploadImageToTwitter(client, Buffer.from(response.data), mimeType, `(main-${mediaIds.length + 1})`);
             mediaIds.push(mediaId);
-            console.log('✅ Đã upload ảnh trực tiếp lên Twitter, Media ID:', mediaId);
+            
+            console.log(`✅ Successfully uploaded image ${mediaIds.length}/4 from URL: ${url}`);
             
           } catch (urlError) {
-            console.error('❌ Lỗi xử lý ảnh từ URL:', url, urlError.message);
+            console.error('❌ Lỗi xử lý ảnh từ URL:', url);
+            console.error('❌ Chi tiết lỗi:', urlError.message);
+            console.error('❌ Stack trace:', urlError.stack);
             // Continue with other images if one fails
           }
         }
@@ -1447,9 +1623,9 @@ app.post('/external/post-first', async (req, res) => {
         });
 
         // Upload directly to Twitter without saving to disk
-        const mediaId = await client.v1.uploadMedia(Buffer.from(response.data));
+        const mimeType = getMimeTypeFromResponse(response, url);
+        const mediaId = await uploadImageToTwitter(client, Buffer.from(response.data), mimeType, '(external)');
         mediaIds.push(mediaId);
-        console.log('✅ Đã upload ảnh trực tiếp lên Twitter (external), Media ID:', mediaId);
       } catch (err) {
         console.warn('❌ Không thể upload ảnh từ URL:', url, err.message);
       }
@@ -1607,9 +1783,9 @@ async function postArticleToTwitter(article, config, options = {}) {
       });
 
       // Upload directly to Twitter without saving to disk
-      const mediaId = await client.v1.uploadMedia(Buffer.from(response.data));
+      const mimeType = getMimeTypeFromResponse(response, url);
+      const mediaId = await uploadImageToTwitter(client, Buffer.from(response.data), mimeType, '(postArticleToTwitter)');
       mediaIds.push(mediaId);
-      console.log('✅ Đã upload ảnh trực tiếp lên Twitter (postArticleToTwitter), Media ID:', mediaId);
       
       // small delay between uploads to be gentle
       await new Promise(r => setTimeout(r, 300));
