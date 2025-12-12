@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            color: #1da1f2;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links a:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Form Elements */
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
+            display: block;
+            font-size: 15px;
+        }
+
+        .field input,
+        .field textarea,
+        .field select {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .field input:focus,
+        .field textarea:focus,
+        .field select:focus {
+            outline: none;
+            border-color: #1da1f2;
+            box-shadow: 0 0 0 4px rgba(29, 161, 242, 0.1);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1da1f2 0%, #0d8bd9 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(29, 161, 242, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(29, 161, 242, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+            margin-top: 15px;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+        /* Messages */
+        .message {
+            display: none;
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            animation: slideIn 0.4s ease-out;
+            border-left: 5px solid;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .message.success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border-left-color: #10b981;
+        }
+
+        .message.error {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+            border-left-color: #ef4444;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-left: 5px solid #1da1f2;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            color: #0c4a6e;
+            font-size: 14px;
+        }
+
+        /* Character Count */
+        .char-count {
+            text-align: right;
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .char-count.warning {
+            color: #f59e0b;
+        }
+
+        .char-count.error {
+            color: #ef4444;
+        }
+
+        /* Title List */
+        #titlesList {
+            background: rgba(248, 250, 252, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 10px;
+            }
+            
+            .header, .card {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .nav-links {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fab fa-twitter"></i> Twitter Auto Post</h1>
+            <div class="nav-links">
+                <a href="/"><i class="fas fa-home"></i> Trang chủ</a>
+                <a href="/docx"><i class="fas fa-file-word"></i> DOCX</a>
+            </div>
+        </div>
+
+        <div id="msg" class="message"></div>
+
+        <% if (!hasKeys) { %>
+            <div class="card">
+                <h2><i class="fas fa-key"></i> Cấu hình Twitter API</h2>
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i> Cần cấu hình Twitter API keys để sử dụng tính năng đăng tweet
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-code"></i> App Key</label>
+                    <input id="appKey" type="text" placeholder="Nhập App Key..." value="<%= cfg.appKey || '' %>" />
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-lock"></i> App Secret</label>
+                    <input id="appSecret" type="password" placeholder="Nhập App Secret..." value="<%= cfg.appSecret || '' %>" />
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-ticket-alt"></i> Access Token</label>
+                    <input id="accessToken" type="text" placeholder="Nhập Access Token..." value="<%= cfg.accessToken || '' %>" />
+                </div>
+                <div class="field">
+                    <label><i class="fas fa-shield-alt"></i> Access Secret</label>
+                    <input id="accessSecret" type="password" placeholder="Nhập Access Secret..." value="<%= cfg.accessSecret || '' %>" />
+                </div>
+                <button class="btn btn-primary" onclick="saveKeys()">
+                    <i class="fas fa-save"></i> Lưu cấu hình
+                </button>
+            </div>
+        <% } else { %>
+            <div class="card">
+                <h2><i class="fas fa-database"></i> Lấy dữ liệu từ API theo Page</h2>
+                
+                <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
+                    <div class="field" style="flex: 1; min-width: 200px;">
+                        <label><i class="fas fa-link"></i> URL API Base</label>
+                        <input id="apiBaseUrl" type="text" placeholder="URL API..." value="https://beiyong.slapibf.com/api.php/provide/art/?ac=detail&t=72" />
+                    </div>
+                    <div class="field" style="width: 100px;">
+                        <label><i class="fas fa-file-alt"></i> Page</label>
+                        <input id="apiPage" type="number" min="1" value="1" />
+                    </div>
+                    <button class="btn btn-success" onclick="fetchPageData()" style="height: 50px;">
+                        <i class="fas fa-download"></i> Lấy Page
+                    </button>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h3 style="color: white; margin-bottom: 10px; font-size: 24px; font-weight: 700;">
+                            <i class="fas fa-rocket"></i> TỰ ĐỘNG LẬP LỊCH 20 BÀI
+                        </h3>
+                        <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 20px;">
+                            🚀 Lấy API → AI tạo content → Lập lịch cố định → Hiển thị table trạng thái
+                        </p>
+                        
+                        <button class="btn" onclick="autoCreateSchedule()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; padding: 18px 40px; font-size: 18px; font-weight: 700; border-radius: 12px; box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <i class="fas fa-magic"></i> BẮT ĐẦU TỰ ĐỘNG
+                        </button>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; backdrop-filter: blur(10px);">
+                        <div style="text-align: center; color: white;">
+                            <div style="font-size: 20px; margin-bottom: 5px;">🌅</div>
+                            <div style="font-weight: 600;">Sáng 8:00</div>
+                        </div>
+                        <div style="text-align: center; color: white;">
+                            <div style="font-size: 20px; margin-bottom: 5px;">🌞</div>
+                            <div style="font-weight: 600;">Trưa 12:00</div>
+                        </div>
+                        <div style="text-align: center; color: white;">
+                            <div style="font-size: 20px; margin-bottom: 5px;">🌆</div>
+                            <div style="font-weight: 600;">Chiều 17:00</div>
+                        </div>
+                        <div style="text-align: center; color: white;">
+                            <div style="font-size: 20px; margin-bottom: 5px;">🌙</div>
+                            <div style="font-weight: 600;">Tối 21:00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Schedule Status Table -->
+                <div id="scheduleStatusSection" style="display: none; margin-top: 30px;">
+                    <div class="card">
+                        <h2><i class="fas fa-table"></i> Trạng thái lịch đăng 20 bài</h2>
+                        <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <div id="scheduleStats" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                <span style="background: #10b981; color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                    <i class="fas fa-check"></i> Thành công: <span id="successCount">0</span>
+                                </span>
+                                <span style="background: #f59e0b; color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                    <i class="fas fa-clock"></i> Đang chờ: <span id="pendingCount">0</span>
+                                </span>
+                                <span style="background: #ef4444; color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                    <i class="fas fa-times"></i> Lỗi: <span id="errorCount">0</span>
+                                </span>
+                            </div>
+                            <button class="btn btn-secondary" onclick="refreshScheduleTable()" style="margin-left: auto;">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        
+                        <div style="overflow-x: auto; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                            <table id="scheduleTable" style="width: 100%; border-collapse: collapse; background: white; font-size: 14px;">
+                                <thead>
+                                    <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                        <th style="padding: 12px; text-align: center; font-weight: 600; width: 50px;">#</th>
+                                        <th style="padding: 12px; text-align: left; font-weight: 600;">Tiêu đề</th>
+                                        <th style="padding: 12px; text-align: center; font-weight: 600; width: 80px;">Ngày</th>
+                                        <th style="padding: 12px; text-align: center; font-weight: 600; width: 100px;">Thời gian</th>
+                                        <th style="padding: 12px; text-align: center; font-weight: 600; width: 60px;">Ảnh</th>
+                                        <th style="padding: 12px; text-align: center; font-weight: 600; width: 100px;">Trạng thái</th>
+                                        <th style="padding: 12px; text-align: center; font-weight: 600; width: 80px;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="scheduleTableBody">
+                                    <tr>
+                                        <td colspan="7" style="padding: 30px; text-align: center; color: #64748b; font-style: italic;">
+                                            Nhấn "BẮT ĐẦU TỰ ĐỘNG" để tạo lịch đăng
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i> Lấy title và 4 hình ảnh từ mỗi bài viết trong page. Sử dụng "Xử lý tự động" để tự động lập lịch 20 bài trong 5 ngày.
+                </div>
+                
+                <div id="pageDataList" style="display: none;">
+                    <h4 style="margin: 20px 0 15px 0; color: #2d3748;"><i class="fas fa-table"></i> Danh sách bài viết:</h4>
+                    <div style="overflow-x: auto; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                        <table id="articlesTable" style="width: 100%; border-collapse: collapse; background: white;">
+                            <thead>
+                                <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                    <th style="padding: 15px; text-align: left; font-weight: 600;">#</th>
+                                    <th style="padding: 15px; text-align: left; font-weight: 600;">Tiêu đề</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: 600;">Hình ảnh</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: 600;">Số ảnh</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: 600;">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="articlesTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="card">
+                <h2><i class="fab fa-twitter"></i> Đăng Tweet</h2>
+
+                <div class="field">
+                    <label><i class="fas fa-edit"></i> Nội dung tweet</label>
+                    <textarea id="tweetText" rows="5" placeholder="Nhập nội dung tweet hoặc sao chép từ API ở trên..." oninput="updateCharCount()"></textarea>
+                    <div id="charCount" class="char-count">0 / 280</div>
+                    <div class="info-box">
+                        <i class="fas fa-info-circle"></i> Twitter không cho phép đăng tweet trùng lặp. Hãy thay đổi nội dung hoặc thêm emoji/thời gian để tránh lỗi.
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label><i class="fas fa-images"></i> URL ảnh (mỗi dòng 1 URL, tối đa 4)</label>
+                    <textarea id="imageUrls" rows="4" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg"></textarea>
+                    <div class="info-box">
+                        <i class="fas fa-camera"></i> Dán URL ảnh trực tiếp (JPG, PNG, GIF, WebP)
+                    </div>
+                </div>
+
+                  
+
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="postTweet()" style="flex: 1; min-width: 200px;">
+                        <i class="fas fa-paper-plane"></i> Đăng Tweet Ngay
+                    </button>
+                    <button class="btn btn-secondary" onclick="toggleSchedule()" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);">
+                        <i class="fas fa-clock"></i> Lập Lịch Đăng
+                    </button>
+                </div>
+                
+                <div id="scheduleSection" style="display: none; margin-top: 20px; padding: 20px; background: rgba(248, 250, 252, 0.8); border-radius: 12px;">
+                    <h4 style="margin-bottom: 15px; color: #2d3748;"><i class="fas fa-calendar-alt"></i> Lập lịch đăng tweet</h4>
+                    
+                    <div class="info-box" style="margin-bottom: 15px;">
+                        <i class="fas fa-info-circle"></i> Tweet sẽ được lập lịch trên server và tự động đăng vào thời gian đã chọn.
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">📅 Ngày đăng:</label>
+                            <input type="date" id="scheduleDate" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600;">⏰ Giờ đăng:</label>
+                            <input type="time" id="scheduleTime" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-success" onclick="scheduleTweet()" style="flex: 1;">
+                            <i class="fas fa-calendar-plus"></i> Xác nhận lập lịch
+                        </button>
+                        <button class="btn btn-secondary" onclick="toggleSchedule()" style="flex: 1;">
+                            <i class="fas fa-times"></i> Hủy
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="btn btn-danger" onclick="clearAll()" style="margin-top: 15px;">
+                    <i class="fas fa-trash-alt"></i> Xóa tất cả
+                </button>
+                </div>
+                <% } %>
+        
+        <!-- Scheduled Tweets Section -->
+        <div class="card">
+            <h2><i class="fas fa-calendar-check"></i> Tweet đã lập lịch</h2>
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i> Hệ thống sử dụng server-side scheduling để lập lịch tweet. Tweet sẽ được đăng tự động vào thời gian đã chọn.
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                <button class="btn btn-secondary" onclick="loadScheduledTweets()">
+                    <i class="fas fa-refresh"></i> Tải lại danh sách
+                </button>
+                <button class="btn btn-warning" onclick="debugJobs()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    <i class="fas fa-bug"></i> Debug Jobs
+                </button>
+                <button class="btn btn-success" onclick="testSchedule()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <i class="fas fa-clock"></i> Test Lịch (1 phút)
+                </button>
+            </div>
+            <div id="scheduledTweetsList">
+                <p style="text-align: center; color: #64748b; font-style: italic;">Nhấn "Tải lại danh sách" để xem các tweet đã lập lịch</p>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    <script>
+        function showMessage(msg, type = 'success') {
+            const el = document.getElementById('msg');
+            el.textContent = msg;
+            el.className = `message ${type}`;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 5000);
+        }
+
+        function updateCharCount() {
+            const text = document.getElementById('tweetText').value;
+            const count = text.length;
+            const el = document.getElementById('charCount');
+            el.textContent = `${count} / 280`;
+
+            if (count > 280) {
+                el.className = 'char-count error';
+            } else if (count > 250) {
+                el.className = 'char-count warning';
+            } else {
+                el.className = 'char-count';
+            }
+        }
+
+        let pageArticles = [];
+
+        // Nội dung tiếng Trung tự động
+        const chineseContents = [
+            "🔥 最新热门内容！精选高质量资源，每日更新不间断。专业团队精心制作，为您带来最佳视觉体验。立即访问获取更多精彩内容！",
+            "✨ 独家珍藏版本！超清画质，完整收录，绝对值得收藏。限时免费分享，机会难得不容错过。快来体验顶级品质内容！",
+            "� VIP 专属资源！会员独享特权内容，高端定制服务。精品推荐，品质保证，满足您的所有需求。现在就来探索更多惊喜！",
+            "🎯 热门推荐系列！网友强烈推荐，口碑爆棚的优质内容。每天都有新惊喜，让您享受不一样的精彩体验。不要错过这个机会！",
+            "🌟 精品收藏必备！经典永恒，值得反复品味的优质资源。专业制作团队倾力打造，为您呈现完美视觉盛宴。",
+            "🚀 全网最火内容！病毒式传播，人人都在看的热门资源。高清无码，完整版本，绝对让您满意。立即点击查看更多！",
+            "💯 品质保证系列！严格筛选，只为给您最好的内容体验。每一部都是精心挑选的佳作，保证让您物超所值。",
+            "🎊 限时特惠分享！平时收费内容现在免费开放，数量有限先到先得。这样的机会不多，赶紧把握住这次机会！"
+        ];
+
+        function clearAll() {
+            document.getElementById('tweetText').value = '';
+            document.getElementById('imageUrls').value = '';
+            document.getElementById('pageDataList').style.display = 'none';
+            document.getElementById('articlesTableBody').innerHTML = '';
+            pageArticles = [];
+            allArticlesContent = [];
+            currentUsedIndex = -1;
+            updateCharCount();
+        }
+
+        async function generateAllArticlesContent() {
+            allArticlesContent = [];
+            
+            for (let i = 0; i < pageArticles.length; i++) {
+                const article = pageArticles[i];
+                const title = article.title || 'Không có tiêu đề';
+                
+                try {
+                    showMessage(`🤖 Đang tạo nội dung AI cho bài ${i + 1}/${pageArticles.length}: ${title.substring(0, 30)}...`, 'success');
+                    
+                    // Gọi AI để tạo nội dung
+                    const res = await fetch('/api/ai/generate-content', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title })
+                    });
+                    const data = await res.json();
+
+                    let aiContent;
+                    if (res.ok && data.success) {
+                        aiContent = data.content;
+                    } else {
+                        // Fallback nếu AI lỗi
+                        aiContent = getRandomChineseContent();
+                    }
+
+                    // Lưu nội dung AI
+                    allArticlesContent[i] = aiContent;
+                    
+                    // Cập nhật table để hiển thị trạng thái
+                    updateArticleRowStatus(i, 'completed');
+                    
+                    // Delay giữa các request để tránh rate limit
+                    if (i < pageArticles.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                    
+                } catch (error) {
+                    console.error(`❌ Lỗi tạo nội dung cho bài ${i + 1}:`, error);
+                    allArticlesContent[i] = getRandomChineseContent();
+                    updateArticleRowStatus(i, 'error');
+                }
+            }
+            
+            // Tự động sử dụng bài viết đầu tiên
+            useArticleWithPreGeneratedContent(0);
+            showMessage(`✅ Đã tạo xong nội dung AI cho ${pageArticles.length} bài viết!`, 'success');
+        }
+
+        function updateArticleRowStatus(index, status) {
+            const row = document.getElementById(`article-row-${index}`);
+            if (!row) return;
+            
+            const statusCell = row.cells[0]; // Cột đầu tiên
+            const currentContent = statusCell.innerHTML;
+            
+            let statusBadge = '';
+            if (status === 'completed') {
+                statusBadge = '<span style="background: #10b981; color: white; padding: 2px 6px; border-radius: 8px; font-size: 10px; margin-left: 8px;">✓ AI</span>';
+            } else if (status === 'error') {
+                statusBadge = '<span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 8px; font-size: 10px; margin-left: 8px;">⚠ TPL</span>';
+            }
+            
+            // Thay thế badge cũ bằng badge mới
+            const cleanContent = currentContent.replace(/<span[^>]*>(AUTO|✓ AI|⚠ TPL)<\/span>/g, '');
+            statusCell.innerHTML = cleanContent + statusBadge;
+        }
+
+        function useArticleWithPreGeneratedContent(index) {
+            const article = pageArticles[index];
+            if (!article) return;
+
+            const title = article.title || 'Không có tiêu đề';
+            
+            // Sử dụng nội dung AI đã tạo sẵn
+            const aiContent = allArticlesContent[index] || getRandomChineseContent();
+            
+            // Điền vào form
+            const tweetTextElement = document.getElementById('tweetText');
+            const tweetContent = `${title}\n\n${aiContent}`;
+            tweetTextElement.value = tweetContent;
+            updateCharCount();
+
+            // Điền images
+            const imageUrlsElement = document.getElementById('imageUrls');
+            if (article.images && article.images.length > 0) {
+                const imageUrls = article.images.slice(0, 4).join('\n');
+                imageUrlsElement.value = imageUrls;
+            } else {
+                imageUrlsElement.value = '';
+            }
+
+            // Highlight bài viết đang sử dụng
+            if (currentUsedIndex >= 0) {
+                const oldRow = document.getElementById(`article-row-${currentUsedIndex}`);
+                if (oldRow) oldRow.style.backgroundColor = 'transparent';
+            }
+            currentUsedIndex = index;
+            const currentRow = document.getElementById(`article-row-${index}`);
+            if (currentRow) currentRow.style.backgroundColor = '#dcfce7';
+
+            // Scroll to tweet section
+            setTimeout(() => {
+                const tweetCard = document.querySelector('.card:last-child');
+                if (tweetCard) {
+                    tweetCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+
+            const shortTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
+            const imageCount = article.images ? article.images.length : 0;
+            showMessage(`✅ Đã sử dụng nội dung AI: ${shortTitle} | ${imageCount} ảnh`, 'success');
+        }
+
+        function getRandomChineseContent() {
+            return chineseContents[Math.floor(Math.random() * chineseContents.length)];
+        }
+
+        function toggleSchedule() {
+            const section = document.getElementById('scheduleSection');
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                
+                // Set default date/time (1 hour from now)
+                const now = new Date();
+                now.setHours(now.getHours() + 1);
+                
+                document.getElementById('scheduleDate').value = now.toISOString().split('T')[0];
+                document.getElementById('scheduleTime').value = now.toTimeString().slice(0, 5);
+            } else {
+                section.style.display = 'none';
+            }
+        }
+
+        async function scheduleTweet() {
+            const text = document.getElementById('tweetText').value.trim();
+            const imageUrls = document.getElementById('imageUrls').value.trim();
+            const scheduleDate = document.getElementById('scheduleDate').value;
+            const scheduleTime = document.getElementById('scheduleTime').value;
+
+            if (!text) {
+                return showMessage('⚠️ Vui lòng nhập nội dung tweet.', 'error');
+            }
+
+            if (!scheduleDate || !scheduleTime) {
+                return showMessage('⚠️ Vui lòng chọn ngày và giờ đăng.', 'error');
+            }
+
+            const scheduledTime = new Date(`${scheduleDate}T${scheduleTime}`);
+            if (scheduledTime <= new Date()) {
+                return showMessage('⚠️ Thời gian đăng phải trong tương lai.', 'error');
+            }
+
+            try {
+                showMessage('📅 Đang lập lịch tweet...', 'success');
+
+                const res = await fetch('/api/twitter/schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        imageUrls: imageUrls,
+                        scheduledTime: scheduledTime.toISOString()
+                    })
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể lập lịch tweet');
+                }
+
+                showMessage(`✅ ${data.message}`, 'success');
+                toggleSchedule();
+                loadScheduledTweets();
+
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        async function loadScheduledTweets() {
+            try {
+                const res = await fetch('/api/twitter/scheduled');
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error('Không thể tải danh sách tweet');
+                }
+
+                displayScheduledTweets(data.tweets);
+
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ Không thể tải danh sách tweet đã lập lịch', 'error');
+            }
+        }
+
+        function displayScheduledTweets(tweets) {
+            const container = document.getElementById('scheduledTweetsList');
+            
+            if (tweets.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #64748b; font-style: italic;">Chưa có tweet nào được lập lịch</p>';
+                return;
+            }
+
+            let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">';
+            html += '<thead><tr style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); color: white;">';
+            html += '<th style="padding: 12px; text-align: left;">Nội dung</th>';
+            html += '<th style="padding: 12px; text-align: center;">Ảnh</th>';
+            html += '<th style="padding: 12px; text-align: center;">Thời gian đăng</th>';
+            html += '<th style="padding: 12px; text-align: center;">Thao tác</th>';
+            html += '</tr></thead><tbody>';
+
+            tweets.forEach(tweet => {
+                const scheduleTime = new Date(tweet.scheduledTime);
+                const timeStr = scheduleTime.toLocaleString('vi-VN');
+                
+                html += '<tr style="border-bottom: 1px solid #e2e8f0;">';
+                html += `<td style="padding: 12px; max-width: 300px;">${tweet.text}</td>`;
+                html += `<td style="padding: 12px; text-align: center;"><span style="background: #10b981; color: white; padding: 2px 6px; border-radius: 8px; font-size: 12px;">${tweet.imageCount}</span></td>`;
+                html += `<td style="padding: 12px; text-align: center; font-size: 14px;">${timeStr}</td>`;
+                html += `<td style="padding: 12px; text-align: center;">`;
+                html += `<button onclick="cancelScheduledTweet(${tweet.id})" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">`;
+                html += '<i class="fas fa-times"></i> Hủy</button></td>';
+                html += '</tr>';
+            });
+
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        async function cancelScheduledTweet(tweetId) {
+            if (!confirm('Bạn có chắc muốn hủy lịch đăng tweet này?')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/twitter/scheduled/${tweetId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể hủy lịch đăng');
+                }
+
+                showMessage('✅ Đã hủy lịch đăng tweet', 'success');
+                loadScheduledTweets();
+
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        async function debugJobs() {
+            try {
+                const res = await fetch('/api/debug/jobs');
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error('Không thể lấy thông tin debug');
+                }
+
+                let debugInfo = `🐛 DEBUG THÔNG TIN JOBS:\n\n`;
+                debugInfo += `⏰ Thời gian hiện tại: ${data.currentTime}\n`;
+                debugInfo += `📊 Tổng jobs: ${data.totalJobs}\n`;
+                debugInfo += `📋 Tổng tweets: ${data.totalTweets}\n\n`;
+
+                if (data.jobs.length > 0) {
+                    debugInfo += `📝 CHI TIẾT JOBS:\n`;
+                    data.jobs.forEach((job, index) => {
+                        debugInfo += `\n${index + 1}. ID: ${job.tweetId}\n`;
+                        debugInfo += `   ⏰ Lịch: ${job.scheduledTime}\n`;
+                        debugInfo += `   🔧 Cron: ${job.cronFormat}\n`;
+                        debugInfo += `   📊 Trạng thái: ${job.status}\n`;
+                        debugInfo += `   📝 Nội dung: ${job.content}\n`;
+                    });
+                } else {
+                    debugInfo += `❌ Không có job nào đang chạy`;
+                }
+
+                alert(debugInfo);
+                console.log('Debug Jobs:', data);
+
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ Lỗi debug: ' + err.message, 'error');
+            }
+        }
+
+        async function testSchedule() {
+            if (!confirm('🧪 Test lập lịch tweet sau 1 phút?\n\nSẽ tạo một tweet test và đăng sau 1 phút để kiểm tra hệ thống.')) {
+                return;
+            }
+
+            try {
+                // Tạo thời gian 1 phút sau
+                const testTime = new Date();
+                testTime.setMinutes(testTime.getMinutes() + 1);
+
+                const testContent = `🧪 Test tweet tự động - ${new Date().toLocaleString('vi-VN')} 
+
+✅ Hệ thống lập lịch hoạt động bình thường!
+
+#Test #AutoPost #Schedule`;
+
+                const res = await fetch('/api/twitter/schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: testContent,
+                        imageUrls: '',
+                        scheduledTime: testTime.toISOString()
+                    })
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể tạo test schedule');
+                }
+
+                showMessage(`✅ Đã tạo test tweet! Sẽ đăng lúc ${testTime.toLocaleString('vi-VN')} (1 phút nữa)`, 'success');
+                loadScheduledTweets();
+
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ Lỗi tạo test: ' + err.message, 'error');
+            }
+        }
+
+        let scheduleData = [];
+
+        async function autoCreateSchedule() {
+            const baseUrl = document.getElementById('apiBaseUrl').value.trim();
+            const page = document.getElementById('apiPage').value;
+
+            if (!baseUrl) {
+                return showMessage('⚠️ Vui lòng nhập URL API.', 'error');
+            }
+
+            // Get tomorrow's date for display
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toLocaleDateString('vi-VN');
+
+            if (!confirm(`🚀 TỰ ĐỘNG LẬP LỊCH 20 BÀI\n\n📅 Bắt đầu: ${tomorrowStr}\n📋 Lịch cố định: 8h, 12h, 17h, 21h\n⚡ 20 bài chia đều 5 ngày (4 bài/ngày)\n\n✅ Xác nhận và hiển thị table trạng thái?`)) {
+                return;
+            }
+
+            try {
+                showMessage('🚀 Đang tự động tạo lịch và hiển thị table...', 'success');
+
+                const res = await fetch('/api/auto-schedule-20-fixed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        apiUrl: baseUrl,
+                        page: page 
+                    })
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể tự động lập lịch');
+                }
+
+                // Store schedule data
+                scheduleData = data.scheduleDetails || [];
+                
+                // Show table section
+                document.getElementById('scheduleStatusSection').style.display = 'block';
+                
+                // Update table
+                updateScheduleTable();
+                
+                // Show success message
+                showMessage(`🎉 Hoàn thành! Đã lập lịch ${data.scheduledTweets}/${data.articlesProcessed} bài. Xem table bên dưới.`, 'success');
+                
+                // Scroll to table
+                setTimeout(() => {
+                    document.getElementById('scheduleStatusSection').scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }, 500);
+
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        function updateScheduleTable() {
+            const tbody = document.getElementById('scheduleTableBody');
+            const successCount = scheduleData.filter(item => item.success).length;
+            const errorCount = scheduleData.filter(item => !item.success).length;
+            const pendingCount = successCount; // All successful items are pending until posted
+            
+            // Update stats
+            document.getElementById('successCount').textContent = successCount;
+            document.getElementById('pendingCount').textContent = pendingCount;
+            document.getElementById('errorCount').textContent = errorCount;
+            
+            if (scheduleData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="padding: 30px; text-align: center; color: #64748b; font-style: italic;">
+                            Nhấn "BẮT ĐẦU TỰ ĐỘNG" để tạo lịch đăng
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            scheduleData.forEach((item, index) => {
+                const scheduleDate = new Date(item.scheduledTime);
+                const dayStr = scheduleDate.toLocaleDateString('vi-VN');
+                const timeStr = scheduleDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                
+                let statusBadge = '';
+                let statusColor = '';
+                
+                if (item.success) {
+                    statusBadge = '<i class="fas fa-clock"></i> Đang chờ';
+                    statusColor = '#f59e0b';
+                } else {
+                    statusBadge = '<i class="fas fa-times"></i> Lỗi';
+                    statusColor = '#ef4444';
+                }
+                
+                html += `
+                    <tr style="border-bottom: 1px solid #e2e8f0; ${index % 2 === 0 ? 'background: #f8fafc;' : ''}">
+                        <td style="padding: 12px; text-align: center; font-weight: 600; color: #667eea;">${item.articleIndex}</td>
+                        <td style="padding: 12px;">
+                            <div style="font-weight: 500; color: #1a202c; line-height: 1.4; max-width: 300px;">
+                                ${item.title}
+                            </div>
+                        </td>
+                        <td style="padding: 12px; text-align: center; font-size: 13px; color: #64748b;">
+                            Ngày ${item.day}
+                        </td>
+                        <td style="padding: 12px; text-align: center; font-weight: 500;">
+                            <div style="color: #1a202c;">${timeStr}</div>
+                            <div style="font-size: 11px; color: #64748b;">${item.timeSlotName}</div>
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            <span style="background: ${item.imageCount > 0 ? '#10b981' : '#6b7280'}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                ${item.imageCount || 0}
+                            </span>
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            <span style="background: ${statusColor}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                ${statusBadge}
+                            </span>
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            ${item.success ? `
+                                <button onclick="cancelScheduleItem(${item.tweetId})" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer;" title="Hủy lịch">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            ` : `
+                                <span style="color: #64748b; font-size: 11px;">N/A</span>
+                            `}
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        async function refreshScheduleTable() {
+            try {
+                showMessage('🔄 Đang refresh trạng thái...', 'success');
+                
+                // Get current scheduled tweets from server
+                const res = await fetch('/api/twitter/scheduled');
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    // Update status based on server data
+                    const serverTweets = data.tweets || [];
+                    
+                    scheduleData.forEach(item => {
+                        if (item.success) {
+                            const serverTweet = serverTweets.find(t => t.id === item.tweetId);
+                            if (!serverTweet) {
+                                // Tweet not found in server = might be posted or cancelled
+                                item.status = 'completed';
+                            }
+                        }
+                    });
+                    
+                    updateScheduleTable();
+                    showMessage('✅ Đã refresh trạng thái', 'success');
+                } else {
+                    throw new Error('Không thể lấy dữ liệu từ server');
+                }
+                
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ Lỗi refresh: ' + err.message, 'error');
+            }
+        }
+
+        async function cancelScheduleItem(tweetId) {
+            if (!confirm('Bạn có chắc muốn hủy lịch đăng tweet này?')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/twitter/scheduled/${tweetId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể hủy lịch đăng');
+                }
+
+                // Update local data
+                const item = scheduleData.find(s => s.tweetId === tweetId);
+                if (item) {
+                    item.success = false;
+                    item.error = 'Đã hủy';
+                }
+                
+                updateScheduleTable();
+                showMessage('✅ Đã hủy lịch đăng tweet', 'success');
+
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+
+
+        async function fetchPageData() {
+            const baseUrl = document.getElementById('apiBaseUrl').value.trim();
+            const page = document.getElementById('apiPage').value;
+
+            if (!baseUrl) {
+                return showMessage('⚠️ Vui lòng nhập URL API.', 'error');
+            }
+
+            try {
+                showMessage('📡 Đang lấy dữ liệu page ' + page + '...', 'success');
+
+                const apiUrl = baseUrl + '&pg=' + page;
+                const res = await fetch('/api/fetch-page-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiUrl })
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể lấy dữ liệu từ API');
+                }
+
+                pageArticles = data.articles;
+                console.log('📋 Dữ liệu pageArticles:', pageArticles);
+                displayArticlesTable(data.articles);
+
+                document.getElementById('pageDataList').style.display = 'block';
+                showMessage(`✅ Đã lấy ${data.articles.length} bài viết từ page ${page}!`, 'success');
+
+                // Tự động tạo nội dung cho tất cả bài viết
+                if (data.articles.length > 0) {
+                    showMessage(`🤖 Đang tự động tạo nội dung AI cho ${data.articles.length} bài viết...`, 'success');
+                    setTimeout(() => {
+                        generateAllArticlesContent(); // Tạo nội dung cho tất cả bài viết
+                    }, 1000);
+                }
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        async function bulkProcess() {
+            const baseUrl = document.getElementById('apiBaseUrl').value.trim();
+            const page = document.getElementById('apiPage').value;
+
+            if (!baseUrl) {
+                return showMessage('⚠️ Vui lòng nhập URL API.', 'error');
+            }
+
+            if (!confirm('🚀 Bắt đầu xử lý tự động 20 bài?\n\n📋 Quy trình:\n1. Lấy 20 bài từ API\n2. AI tạo content cho từng bài\n3. Lập lịch đăng 5 ngày (4 bài/ngày)\n\n⏰ Thời gian: Sáng 8h, Trưa 12h, Chiều 17h, Tối 21h')) {
+                return;
+            }
+
+            try {
+                showMessage('🚀 Bắt đầu xử lý tự động 20 bài...', 'success');
+
+                const res = await fetch('/api/bulk-process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        apiUrl: baseUrl,
+                        page: page 
+                    })
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể xử lý bulk');
+                }
+
+                // Display results
+                let resultMessage = `✅ ${data.message}\n\n📊 Chi tiết:\n`;
+                resultMessage += `• Bài viết xử lý: ${data.articlesProcessed}\n`;
+                resultMessage += `• Tweet đã lập lịch: ${data.scheduledTweets}\n\n`;
+                resultMessage += `📅 Lịch đăng:\n`;
+                
+                if (data.scheduleDetails && data.scheduleDetails.length > 0) {
+                    const groupedByDay = {};
+                    data.scheduleDetails.forEach(item => {
+                        if (!item.error) {
+                            if (!groupedByDay[item.day]) groupedByDay[item.day] = [];
+                            groupedByDay[item.day].push(`${item.timeSlot}: ${item.title}`);
+                        }
+                    });
+                    
+                    Object.keys(groupedByDay).forEach(day => {
+                        resultMessage += `\nNgày ${day}:\n`;
+                        groupedByDay[day].forEach(item => {
+                            resultMessage += `  • ${item}\n`;
+                        });
+                    });
+                }
+
+                showMessage(resultMessage, 'success');
+                
+                // Refresh scheduled tweets list
+                setTimeout(() => {
+                    loadScheduledTweets();
+                }, 2000);
+
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        let currentUsedIndex = -1;
+        let allArticlesContent = []; // Lưu nội dung AI cho tất cả bài viết
+
+        function displayArticlesTable(articles) {
+            const tbody = document.getElementById('articlesTableBody');
+            tbody.innerHTML = '';
+
+            articles.forEach((article, index) => {
+                const row = document.createElement('tr');
+                row.id = `article-row-${index}`;
+                
+                // Highlight bài viết đầu tiên (sẽ được auto sử dụng)
+                const isFirst = index === 0;
+                const baseStyle = isFirst ? 
+                    'border-bottom: 1px solid #e2e8f0; transition: background-color 0.2s; background-color: #fef3c7;' :
+                    'border-bottom: 1px solid #e2e8f0; transition: background-color 0.2s;';
+                
+                row.style.cssText = baseStyle;
+                row.onmouseover = function() { 
+                    if (currentUsedIndex !== index) {
+                        this.style.backgroundColor = '#f8fafc'; 
+                    }
+                };
+                row.onmouseout = function() { 
+                    if (currentUsedIndex === index) {
+                        this.style.backgroundColor = '#dcfce7';
+                    } else if (index === 0 && currentUsedIndex === -1) {
+                        this.style.backgroundColor = '#fef3c7';
+                    } else {
+                        this.style.backgroundColor = 'transparent';
+                    }
+                };
+
+                const title = article.title || 'Không có tiêu đề';
+                const imageCount = article.images ? article.images.length : 0;
+                
+                // Tạo preview ảnh nhỏ
+                let imagePreview = '';
+                if (article.images && article.images.length > 0) {
+                    const firstImage = article.images[0];
+                    imagePreview = `<img src="${firstImage}" style="width: 60px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;" onerror="this.style.display='none'">`;
+                } else {
+                    imagePreview = '<div style="width: 60px; height: 40px; background: #f1f5f9; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 12px;">No img</div>';
+                }
+
+                const statusBadge = isFirst ? 
+                    '<span style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 8px; font-size: 10px; margin-left: 8px;">AUTO</span>' : '';
+
+                row.innerHTML = `
+                    <td style="padding: 15px; font-weight: 600; color: #667eea;">${index + 1}${statusBadge}</td>
+                    <td style="padding: 15px; max-width: 300px;">
+                        <div style="font-weight: 500; color: #1a202c; line-height: 1.4;">
+                            ${title.length > 80 ? title.substring(0, 80) + '...' : title}
+                        </div>
+                    </td>
+                    <td style="padding: 15px; text-align: center;">
+                        ${imagePreview}
+                    </td>
+                    <td style="padding: 15px; text-align: center;">
+                        <span style="background: ${imageCount > 0 ? '#10b981' : '#6b7280'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                            ${imageCount}
+                        </span>
+                    </td>
+                    <td style="padding: 15px; text-align: center;">
+                        <button onclick="useArticle(${index})" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                            <i class="fas fa-arrow-down"></i> Sử dụng
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        async function useArticle(index) {
+            // Nếu đã có nội dung AI sẵn, dùng luôn
+            if (allArticlesContent[index]) {
+                useArticleWithPreGeneratedContent(index);
+                return;
+            }
+            
+            // Nếu chưa có, tạo mới (fallback)
+            console.log('🔄 Tạo nội dung mới cho bài viết index:', index);
+            
+            const article = pageArticles[index];
+            if (!article) {
+                console.error('❌ Không tìm thấy bài viết tại index:', index);
+                return showMessage('❌ Không tìm thấy bài viết!', 'error');
+            }
+
+            const title = article.title || 'Không có tiêu đề';
+            showMessage('🤖 Đang tạo nội dung AI theo tiêu đề...', 'success');
+
+            try {
+                const res = await fetch('/api/ai/generate-content', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title })
+                });
+                const data = await res.json();
+
+                let chineseContent;
+                if (res.ok && data.success) {
+                    chineseContent = data.content;
+                } else {
+                    chineseContent = getRandomChineseContent();
+                }
+
+                // Lưu nội dung vào cache
+                allArticlesContent[index] = chineseContent;
+                updateArticleRowStatus(index, 'completed');
+                
+                // Sử dụng nội dung vừa tạo
+                useArticleWithPreGeneratedContent(index);
+
+            } catch (error) {
+                console.error('❌ Lỗi tạo nội dung AI:', error);
+                allArticlesContent[index] = getRandomChineseContent();
+                updateArticleRowStatus(index, 'error');
+                useArticleWithPreGeneratedContent(index);
+            }
+        }
+
+        async function saveKeys() {
+            const appKey = document.getElementById('appKey').value.trim();
+            const appSecret = document.getElementById('appSecret').value.trim();
+            const accessToken = document.getElementById('accessToken').value.trim();
+            const accessSecret = document.getElementById('accessSecret').value.trim();
+
+            if (!appKey || !appSecret || !accessToken || !accessSecret) {
+                return showMessage('⚠️ Vui lòng nhập đầy đủ tất cả các khóa.', 'error');
+            }
+
+            try {
+                const res = await fetch('/api/twitter/keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ appKey, appSecret, accessToken, accessSecret })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể lưu khóa');
+                }
+                showMessage('✅ Đã lưu cấu hình thành công!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } catch (err) {
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        async function postTweet() {
+            const text = document.getElementById('tweetText').value.trim();
+            const imageUrlsText = document.getElementById('imageUrls').value.trim();
+            const videoUrl = '';
+
+            if (!text) {
+                return showMessage('⚠️ Vui lòng nhập nội dung tweet.', 'error');
+            }
+            if (text.length > 280) {
+                return showMessage('⚠️ Tweet không được vượt quá 280 ký tự.', 'error');
+            }
+
+
+
+            try {
+                const formData = new FormData();
+                formData.append('text', text);
+
+                if (imageUrlsText) {
+                    const urls = imageUrlsText.split('\n')
+                        .map(u => u.trim())
+                        .filter(u => u && u.startsWith('http'))
+                        .slice(0, 4);
+
+                    if (urls.length > 0) {
+                        formData.append('imageUrls', JSON.stringify(urls));
+                    }
+                }
+
+
+
+                showMessage('⏳ Đang xử lý và đăng tweet...', 'success');
+
+                const res = await fetch('/api/twitter/post', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể đăng tweet');
+                }
+
+                let msg = '✅ Đã đăng tweet thành công!';
+                if (data.imageCount > 0) {
+                    msg = `✅ Đã đăng tweet kèm ${data.imageCount} ảnh thành công!`;
+                }
+                msg += ` (ID: ${data.tweetId})`;
+                showMessage(msg, 'success');
+
+                clearAll();
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        // Fetch first article from external API and populate fields
+        async function fetchExternalFirst() {
+            try {
+                showMessage('⏳ Đang lấy danh sách bài từ API...', 'success');
+                const perPage = 20;
+                const page = parseInt(document.getElementById('apiPage').value || '1', 10) || 1;
+                const res = await fetch(`/external/list?perPage=${perPage}&pg=${page}`);
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Không thể lấy danh sách');
+
+                const articles = data.articles || [];
+                renderArticleTable(articles);
+                renderSchedulePreview(articles, ['08:00','12:00','17:00','21:00']);
+                showMessage(`✅ Đã lấy ${articles.length} bài`, 'success');
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        // Call server to fetch and directly post the first article
+        async function postExternalFirst() {
+            try {
+                showMessage('⏳ Đang đăng bài từ API...', 'success');
+                const res = await fetch('/external/post-first', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Không thể đăng bài từ API');
+                let msg = `✅ Đã đăng bài thành công (ID: ${data.tweetId})`;
+                if (typeof data.imageCount === 'number') msg += ` — ${data.imageCount} ảnh`;
+                showMessage(msg, 'success');
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        // Schedule 20 posts (4 posts per day: 08:00,12:00,17:00,21:00)
+        async function schedule20() {
+            try {
+                showMessage('⏳ Đang yêu cầu lập lịch 20 bài...', 'success');
+                const body = {
+                    url: `https://beiyong.slapibf.com/api.php/provide/art/?ac=detail&pg=${parseInt(document.getElementById('apiPage').value||'1',10)}&t=72`,
+                    perPage: 20,
+                    times: ['08:00','12:00','17:00','21:00']
+                };
+
+                // include generate flag from UI
+                body.generate = !!document.getElementById('useGenerate').checked;
+                const res = await fetch('/external/schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Không thể lập lịch');
+
+                showMessage(`✅ Đã lập lịch ${data.scheduledCount || 0} bài thành công`, 'success');
+                // Optionally reload schedules or show details
+                console.log('Scheduled jobs:', data.jobs);
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        // Render fetched articles into a table with preview buttons
+        function renderArticleTable(articles) {
+            const container = document.getElementById('externalList');
+            if (!container) return;
+            if (!articles || articles.length === 0) {
+                container.innerHTML = '<p>Không có bài nào.</p>';
+                return;
+            }
+
+            let html = '<div style="margin-top:16px; background:#fff; padding:16px; border-radius:12px;">';
+            html += '<h3>Danh sách bài (preview)</h3>';
+            html += '<table style="width:100%; border-collapse:collapse; margin-top:8px; font-size:14px;">';
+            html += '<thead><tr><th style="text-align:left; padding:8px; border-bottom:1px solid #eee">#</th><th style="text-align:left; padding:8px; border-bottom:1px solid #eee">Tiêu đề</th><th style="padding:8px; border-bottom:1px solid #eee">Ảnh</th><th style="padding:8px; border-bottom:1px solid #eee">Lịch</th><th style="padding:8px; border-bottom:1px solid #eee">Hành động</th></tr></thead>';
+            html += '<tbody>';
+            for (let i = 0; i < articles.length; i++) {
+                const a = articles[i];
+                const imgCount = (a.imageUrls || []).length;
+                html += `<tr><td style="padding:8px; border-bottom:1px solid #f3f3f3">${i+1}</td>`;
+                html += `<td style="padding:8px; border-bottom:1px solid #f3f3f3">${escapeHtml(a.art_name || '')}${a.generated || a.generatedFull ? ' <span style="color:#059669; font-weight:700;">(AI)</span>' : ''}</td>`;
+                html += `<td style="padding:8px; border-bottom:1px solid #f3f3f3">${imgCount} ảnh</td>`;
+                html += `<td style="padding:8px; border-bottom:1px solid #f3f3f3" id="sched-${i}">-</td>`;
+                html += `<td style="padding:8px; border-bottom:1px solid #f3f3f3"><button class="btn btn-primary" onclick="showContent(${i})">Xem nội dung</button> <button class="btn btn-secondary" style="margin-left:8px;" onclick="enrichArticle(${i})">Enrich</button> <button class="btn btn-primary" style="margin-left:8px;" onclick="enrichFullArticle(${i})">Content with OpenRouter AI</button></td></tr>`;
+            }
+            html += '</tbody></table>';
+            html += '<div style="display:flex; gap:12px; margin-top:12px;\"><button class="btn btn-primary" onclick="postAll()">Post All (lập lịch)</button><button class="btn btn-secondary" onclick="clearArticleList()">Clear</button></div>';
+            html += '</div>';
+            container.innerHTML = html;
+
+            // store articles in global for other actions
+            window._externalArticles = articles;
+        }
+
+        // Enrich a single article by calling server /external/generate
+        async function enrichArticle(index) {
+            try {
+                const articles = window._externalArticles || [];
+                const article = articles[index];
+                if (!article) return showMessage('Bài không tồn tại', 'error');
+                showMessage('⏳ Đang tạo nội dung AI...', 'success');
+                const res = await fetch('/external/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ article })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Không thể tạo nội dung');
+                const result = data.results && data.results[0];
+                if (result && result.extra) {
+                    article.generated = result.extra;
+                    showMessage('✅ Tạo nội dung AI xong', 'success');
+                    showContent(index);
+                    renderArticleTable(window._externalArticles);
+                } else {
+                    throw new Error(result && result.error ? result.error : 'Không có kết quả');
+                }
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        // Enrich all articles
+        async function enrichAll() {
+            try {
+                const articles = window._externalArticles || [];
+                if (!articles || articles.length === 0) return showMessage('Không có bài để enrich', 'error');
+                showMessage('⏳ Đang tạo nội dung AI cho tất cả bài...', 'success');
+                const res = await fetch('/external/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ articles })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Không thể tạo nội dung');
+                const results = data.results || [];
+                // Map results back to articles by title
+                for (const r of results) {
+                    const idx = articles.findIndex(a => a.art_name === r.art_name);
+                    if (idx >= 0 && r.extra) {
+                        articles[idx].generated = r.extra;
+                    }
+                }
+                window._externalArticles = articles;
+                renderArticleTable(articles);
+                showMessage('✅ Hoàn tất tạo nội dung AI cho tất cả bài', 'success');
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        // Enrich (generate full title+content) for single article
+        async function enrichFullArticle(index) {
+            try {
+                const articles = window._externalArticles || [];
+                const article = articles[index];
+                if (!article) return showMessage('Bài không tồn tại', 'error');
+                showMessage('⏳ Đang tạo nội dung đầy đủ bằng AI...', 'success');
+                const res = await fetch('/external/generate-full', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ article })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Không thể tạo nội dung');
+                const result = data.results && data.results[0];
+                if (result && !result.error) {
+                    article.art_name = result.new_title || article.art_name;
+                    article.art_content = result.full_content || article.art_content;
+                    article.generatedFull = true;
+                    window._externalArticles = articles;
+                    renderArticleTable(articles);
+                    showContent(index);
+                    showMessage('✅ Đã cập nhật tiêu đề và nội dung bằng AI', 'success');
+                } else {
+                    throw new Error(result && result.error ? result.error : 'Không có kết quả');
+                }
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        // Enrich full for all articles
+        async function enrichAllFull() {
+            try {
+                const articles = window._externalArticles || [];
+                if (!articles || articles.length === 0) return showMessage('Không có bài để enrich', 'error');
+                showMessage('⏳ Đang tạo nội dung đầy đủ bằng AI cho tất cả bài...', 'success');
+                const res = await fetch('/external/generate-full', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ articles })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Không thể tạo nội dung');
+                const results = data.results || [];
+                for (const r of results) {
+                    const idx = articles.findIndex(a => a.art_name === r.art_name || a.art_name === r.art_name);
+                    if (idx >= 0 && !r.error) {
+                        articles[idx].art_name = r.new_title || articles[idx].art_name;
+                        articles[idx].art_content = r.full_content || articles[idx].art_content;
+                        articles[idx].generatedFull = true;
+                    }
+                }
+                window._externalArticles = articles;
+                renderArticleTable(articles);
+                showMessage('✅ Hoàn tất tạo nội dung đầy đủ cho tất cả bài', 'success');
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        function clearArticleList() {
+            const container = document.getElementById('externalList');
+            if (container) container.innerHTML = '';
+            const preview = document.getElementById('contentPreview');
+            if (preview) preview.innerHTML = '';
+            window._externalArticles = [];
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>\"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'})[c]; });
+        }
+
+        function showContent(index) {
+            const articles = window._externalArticles || [];
+            const a = articles[index];
+            const preview = document.getElementById('contentPreview');
+            if (!a || !preview) return;
+            preview.innerHTML = `<div style="background:#fff; padding:12px; border-radius:12px; margin-top:12px;\"><h4>${escapeHtml(a.art_name || '')}</h4><div style="margin-top:8px;">${a.art_content || ''}</div></div>`;
+            window.scrollTo({ top: preview.offsetTop - 20, behavior: 'smooth' });
+        }
+
+        // Compute schedule preview and fill schedule column
+        function renderSchedulePreview(articles, times, startDate = new Date()) {
+            const slotsPerDay = times.length;
+            for (let i = 0; i < articles.length; i++) {
+                const timeIndex = i % slotsPerDay;
+                const dayOffset = Math.floor(i / slotsPerDay);
+                const [h, m] = times[timeIndex].split(':').map(Number);
+                const scheduled = new Date(startDate);
+                scheduled.setDate(scheduled.getDate() + dayOffset);
+                scheduled.setHours(h, m, 0, 0);
+                while (scheduled.getTime() <= Date.now()) scheduled.setDate(scheduled.getDate() + 1);
+                const el = document.getElementById(`sched-${i}`);
+                if (el) el.textContent = scheduled.toLocaleString();
+            }
+        }
+
+        // Post all: send articles to server to schedule (uses server-side scheduler)
+        async function postAll() {
+            try {
+                const articles = window._externalArticles || [];
+                if (!articles || articles.length === 0) return showMessage('Không có bài để post', 'error');
+                showMessage('⏳ Đang yêu cầu lập lịch cho tất cả bài...', 'success');
+                // include page info in request for traceability
+                const page = parseInt(document.getElementById('apiPage').value || '1', 10) || 1;
+                const res = await fetch('/external/schedule-articles', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ articles, times: ['08:00','12:00','17:00','21:00'], page, generate: !!document.getElementById('useGenerate').checked })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Không thể lập lịch');
+                showMessage(`✅ Đã lập lịch ${data.scheduledCount || 0} bài`, 'success');
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ ' + err.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

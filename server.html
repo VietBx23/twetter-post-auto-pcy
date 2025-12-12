@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>
+    <%= title %>
+  </title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      margin-top: 0;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .field input,
+    .field textarea {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background: #007bff;
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .message {
+      display: none;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>Quản lý và đăng bài lên Twitter</h1>
+      <nav>
+        <a href="/">Trang chủ</a>
+        <a href="/docx">Xem DOCX</a>
+      </nav>
+    </header>
+
+    <div id="msg" class="message"></div>
+
+    <div class="card">
+      <h2>Thiết lập khóa Twitter</h2>
+      <p>Nhập các khóa ứng dụng và người dùng. Bạn có thể cung cấp sau.</p>
+      <div class="row">
+        <div class="field">
+          <label>App Key</label>
+          <input id="appKey" type="text" placeholder="App Key" value="<%= cfg.appKey || '' %>" />
+        </div>
+        <div class="field">
+          <label>App Secret</label>
+          <input id="appSecret" type="text" placeholder="App Secret" value="<%= cfg.appSecret || '' %>" />
+        </div>
+        <div class="field">
+          <label>Access Token</label>
+          <input id="accessToken" type="text" placeholder="Access Token" value="<%= cfg.accessToken || '' %>" />
+        </div>
+        <div class="field">
+          <label>Access Secret</label>
+          <input id="accessSecret" type="text" placeholder="Access Secret" value="<%= cfg.accessSecret || '' %>" />
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="saveKeys()">Lưu khóa</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Đăng tweet</h2>
+      <% if (hasKeys) { %>
+        <div class="field">
+          <label>Nội dung tweet</label>
+          <textarea id="tweetText" rows="5" placeholder="Nhập nội dung..."></textarea>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="postTweet()">Đăng tweet</button>
+          <a href="/twitter" class="btn btn-secondary">Làm mới</a>
+        </div>
+        <% } else { %>
+          <p>Chưa có khóa Twitter. Vui lòng nhập và lưu khóa trước.</p>
+          <% } %>
+    </div>
+  </div>
+
+  <script>
+    function showMessage(msg, type = 'success') {
+      const el = document.getElementById('msg');
+      el.textContent = msg;
+      el.className = `message ${type}`;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    async function saveKeys() {
+      const appKey = document.getElementById('appKey').value.trim();
+      const appSecret = document.getElementById('appSecret').value.trim();
+      const accessToken = document.getElementById('accessToken').value.trim();
+      const accessSecret = document.getElementById('accessSecret').value.trim();
+
+      try {
+        const res = await fetch('/api/twitter/keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ appKey, appSecret, accessToken, accessSecret })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Không thể lưu khóa');
+        }
+        showMessage('Đã lưu khóa Twitter.', 'success');
+      } catch (err) {
+        console.error(err);
+        showMessage(err.message, 'error');
+      }
+    }
+
+    async function postTweet() {
+      const text = document.getElementById('tweetText').value.trim();
+      if (!text) {
+        return showMessage('Nội dung tweet không được trống.', 'error');
+      }
+      try {
+        const res = await fetch('/api/twitter/post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Không thể đăng tweet');
+        }
+        showMessage(`Đã đăng tweet (ID: ${data.tweetId}).`, 'success');
+      } catch (err) {
+        console.error(err);
+        showMessage(err.message, 'error');
+      }
+    }
+  </script>
+</body>
+
+</html>
