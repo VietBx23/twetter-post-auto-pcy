@@ -1,0 +1,149 @@
+<% if (!hasKeys) { %>
+    <div class="card">
+        <h2><i class="fas fa-key"></i> Cấu hình Twitter API</h2>
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 12px; border-radius: 4px; margin-bottom: 16px; color: #856404;">
+            <i class="fas fa-exclamation-triangle"></i> Cần cấu hình Twitter API keys để sử dụng tính năng đăng tweet
+        </div>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+            Vui lòng chuyển sang tab "Cài đặt" để cấu hình Twitter API keys.
+        </p>
+        <button class="btn btn-primary" onclick="showSection('settings')" style="background: var(--accent-color); color: white; border: 1px solid var(--accent-color); padding: 12px 24px; border-radius: 4px; cursor: pointer;">
+            <i class="fas fa-cog"></i> Đi đến Cài đặt
+        </button>
+    </div>
+<% } else { %>
+    <div class="card">
+        <h2><i class="fas fa-database"></i> Lấy dữ liệu từ API theo Page</h2>
+        
+        <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap; margin-bottom: 20px;">
+            <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);"><i class="fas fa-link"></i> URL API Base</label>
+                <input id="apiBaseUrl" type="text" placeholder="URL API..." value="https://beiyong.slapibf.com/api.php/provide/art/?ac=detail&t=72" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; background: var(--bg-primary); color: var(--text-primary);" />
+            </div>
+            <div style="width: 100px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);"><i class="fas fa-file-alt"></i> Page</label>
+                <input id="apiPage" type="number" min="1" value="1" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; background: var(--bg-primary); color: var(--text-primary);" />
+            </div>
+            <div style="width: 120px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);"><i class="fas fa-list-ol"></i> Số lượng</label>
+                <input id="apiLimit" type="number" min="1" max="50" value="10" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; background: var(--bg-primary); color: var(--text-primary);" />
+            </div>
+            <button onclick="fetchPageData()" style="background: #28a745; color: white; border: 1px solid #28a745; padding: 12px 24px; border-radius: 4px; cursor: pointer; height: 50px;">
+                <i class="fas fa-download"></i> Lấy Page
+            </button>
+        </div>
+        
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; margin: 24px 0;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h3 style="color: var(--text-primary); margin-bottom: 12px; font-size: 24px; font-weight: 600;">
+                    <i class="fas fa-rocket"></i> TỰ ĐỘNG ĐĂNG 1 BÀI
+                </h3>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; font-weight: 400;">
+                    Lấy API → Nội dung có sẵn → Upload trực tiếp → Đăng lên Twitter
+                </p>
+                
+                <button onclick="autoCreateSchedule()" style="background: var(--accent-color); color: white; border: 1px solid var(--accent-color); padding: 12px 24px; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-magic"></i> ĐĂNG 1 BÀI NGAY
+                </button>
+            </div>
+        </div>
+        
+        <div style="background: #e7f3ff; border-left: 4px solid #17a2b8; padding: 16px; border-radius: 4px; margin-bottom: 16px; color: var(--text-secondary); font-size: 14px;">
+            <i class="fas fa-info-circle"></i> Lấy title và 4 hình ảnh từ mỗi bài viết trong page. Có thể chọn số lượng bài viết muốn lấy (1-50). Tất cả 4 ảnh sẽ được upload trực tiếp lên Twitter (không tải về máy). Sử dụng "TỰ ĐỘNG ĐĂNG 1 BÀI" để đăng ngay.
+        </div>
+        
+        <div id="pageDataList" style="display: none;">
+            <h4 style="margin: 20px 0 15px 0; color: var(--text-primary);"><i class="fas fa-table"></i> Danh sách bài viết:</h4>
+            <div style="overflow-x: auto;">
+                <table id="articlesTable" style="width: 100%; border-collapse: collapse; background: white; border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden;">
+                    <thead>
+                        <tr style="background: var(--bg-secondary);">
+                            <th style="padding: 15px; text-align: left; color: var(--text-primary); font-weight: 600;">#</th>
+                            <th style="padding: 15px; text-align: left; color: var(--text-primary); font-weight: 600;">Tiêu đề</th>
+                            <th style="padding: 15px; text-align: center; color: var(--text-primary); font-weight: 600;">Preview 4 ảnh</th>
+                            <th style="padding: 15px; text-align: center; color: var(--text-primary); font-weight: 600;">Số ảnh</th>
+                            <th style="padding: 15px; text-align: center; color: var(--text-primary); font-weight: 600;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="articlesTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2><i class="fab fa-twitter"></i> Đăng Tweet</h2>
+
+        <div style="margin-bottom: 20px;">
+            <label style="font-weight: 500; margin-bottom: 8px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; font-size: 14px;"><i class="fas fa-edit"></i> Nội dung tweet</label>
+            <textarea id="tweetText" rows="5" placeholder="Nhập nội dung tweet hoặc sao chép từ API ở trên..." oninput="updateCharCount()" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; font-family: inherit; background: var(--bg-primary); color: var(--text-primary);"></textarea>
+            <div id="charCount" style="text-align: right; font-size: 12px; color: var(--text-secondary); margin-top: 8px; font-weight: 500;">0 / 280</div>
+            <div style="background: #e7f3ff; border-left: 4px solid #17a2b8; padding: 16px; border-radius: 4px; margin-top: 16px; color: var(--text-secondary); font-size: 14px;">
+                <i class="fas fa-info-circle"></i> Twitter không cho phép đăng tweet trùng lặp. Hãy thay đổi nội dung hoặc thêm emoji/thời gian để tránh lỗi.
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="font-weight: 500; margin-bottom: 8px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; font-size: 14px;"><i class="fas fa-images"></i> URL ảnh (mỗi dòng 1 URL, tối đa 4)</label>
+            <textarea id="imageUrls" rows="2" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg" oninput="previewImages()" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; font-family: inherit; background: var(--bg-primary); color: var(--text-primary);"></textarea>
+            
+            <!-- Image Preview Area -->
+            <div id="imagePreviewArea" style="margin-top: 12px; display: none;">
+                <div style="font-weight: 500; margin-bottom: 8px; color: var(--text-primary); font-size: 14px;">
+                    <i class="fas fa-eye"></i> Preview ảnh (sẽ đăng lên Twitter):
+                </div>
+                <div id="imagePreviewContainer" style="display: flex; gap: 8px; flex-wrap: wrap; padding: 12px; background: var(--bg-secondary); border-radius: 4px; border: 1px solid var(--border-color);">
+                </div>
+            </div>
+            
+            <div style="background: #e7f3ff; border-left: 4px solid #17a2b8; padding: 16px; border-radius: 4px; margin-top: 16px; color: var(--text-secondary); font-size: 14px;">
+                <i class="fas fa-camera"></i> Dán URL ảnh trực tiếp (JPG, PNG, GIF, WebP) - Tối đa 4 ảnh sẽ được upload trực tiếp lên Twitter (không tạo file tạm thời)
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button onclick="postTweet()" style="flex: 1; min-width: 200px; background: var(--accent-color); color: white; border: 1px solid var(--accent-color); padding: 12px 24px; border-radius: 4px; cursor: pointer;">
+                <i class="fas fa-paper-plane"></i> Đăng Tweet Ngay
+            </button>
+            <button onclick="toggleSchedule()" style="flex: 1; min-width: 200px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 12px 24px; border-radius: 4px; cursor: pointer;">
+                <i class="fas fa-clock"></i> Lập Lịch Đăng
+            </button>
+        </div>
+        
+        <div id="scheduleSection" style="display: none; margin-top: 20px; padding: 20px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px;">
+            <h4 style="margin-bottom: 15px; color: var(--text-primary);"><i class="fas fa-calendar-alt"></i> Lập lịch đăng tweet</h4>
+            
+            <div style="background: #e7f3ff; border-left: 4px solid #17a2b8; padding: 16px; border-radius: 4px; margin-bottom: 15px; color: var(--text-secondary); font-size: 14px;">
+                <i class="fas fa-info-circle"></i> Tweet sẽ được lập lịch trên server và tự động đăng vào thời gian đã chọn.
+            </div>
+            
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500; color: var(--text-primary);">📅 Ngày đăng:</label>
+                    <input type="date" id="scheduleDate" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; background: var(--bg-primary); color: var(--text-primary);">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500; color: var(--text-primary);">⏰ Giờ đăng:</label>
+                    <input type="time" id="scheduleTime" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; background: var(--bg-primary); color: var(--text-primary);">
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="scheduleTweet()" style="flex: 1; background: #28a745; color: white; border: 1px solid #28a745; padding: 12px 24px; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-calendar-plus"></i> Xác nhận lập lịch
+                </button>
+                <button onclick="toggleSchedule()" style="flex: 1; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 12px 24px; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-times"></i> Hủy
+                </button>
+            </div>
+        </div>
+        
+        <button onclick="clearAll()" style="margin-top: 15px; background: #dc3545; color: white; border: 1px solid #dc3545; padding: 12px 24px; border-radius: 4px; cursor: pointer;">
+            <i class="fas fa-trash-alt"></i> Xóa tất cả
+        </button>
+    </div>
+<% } %>
+
+<div id="msg" style="display: none; padding: 16px 20px; border-radius: 4px; margin-bottom: 16px; font-weight: 500; font-size: 14px; border-left: 4px solid;"></div>
+

@@ -1,0 +1,116 @@
+<% if (!hasKeys) { %>
+    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 16px; border-radius: 4px; margin-bottom: 20px; color: #856404;">
+        <i class="fas fa-info-circle"></i> Cần cấu hình Twitter API keys để sử dụng tính năng đăng tweet
+    </div>
+<% } else { %>
+    <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 16px; border-radius: 4px; margin-bottom: 20px; color: #155724;">
+        <i class="fas fa-check-circle"></i> Twitter API đã được cấu hình thành công
+    </div>
+<% } %>
+
+<div style="margin-bottom: 20px;">
+    <label style="font-weight: 500; margin-bottom: 8px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; font-size: 14px;"><i class="fas fa-code"></i> App Key</label>
+    <input id="appKey" type="text" placeholder="Nhập App Key..." value="<%= cfg.appKey || '' %>" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; background: var(--bg-primary); color: var(--text-primary);" />
+</div>
+
+<div style="margin-bottom: 20px;">
+    <label style="font-weight: 500; margin-bottom: 8px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; font-size: 14px;"><i class="fas fa-lock"></i> App Secret</label>
+    <input id="appSecret" type="password" placeholder="Nhập App Secret..." value="<%= cfg.appSecret || '' %>" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; background: var(--bg-primary); color: var(--text-primary);" />
+</div>
+
+<div style="margin-bottom: 20px;">
+    <label style="font-weight: 500; margin-bottom: 8px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; font-size: 14px;"><i class="fas fa-ticket-alt"></i> Access Token</label>
+    <input id="accessToken" type="text" placeholder="Nhập Access Token..." value="<%= cfg.accessToken || '' %>" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; background: var(--bg-primary); color: var(--text-primary);" />
+</div>
+
+<div style="margin-bottom: 20px;">
+    <label style="font-weight: 500; margin-bottom: 8px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; font-size: 14px;"><i class="fas fa-shield-alt"></i> Access Secret</label>
+    <input id="accessSecret" type="password" placeholder="Nhập Access Secret..." value="<%= cfg.accessSecret || '' %>" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; background: var(--bg-primary); color: var(--text-primary);" />
+</div>
+
+<button onclick="saveKeys()" style="background: var(--accent-color); color: white; border: 1px solid var(--accent-color); padding: 12px 24px; border-radius: 4px; cursor: pointer; width: 100%;">
+    <i class="fas fa-save"></i> Lưu cấu hình
+</button>
+
+<div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+    <h3 style="color: var(--text-primary); margin-bottom: 16px; font-size: 18px; font-weight: 600;">
+        <i class="fas fa-info-circle"></i> Hướng dẫn lấy Twitter API Keys
+    </h3>
+    
+    <div style="background: var(--bg-secondary); padding: 20px; border-radius: 8px; color: var(--text-secondary); font-size: 14px; line-height: 1.6;">
+        <ol style="margin-left: 20px;">
+            <li style="margin-bottom: 8px;">Truy cập <a href="https://developer.twitter.com" target="_blank" style="color: #1da1f2;">developer.twitter.com</a></li>
+            <li style="margin-bottom: 8px;">Đăng nhập với tài khoản Twitter của bạn</li>
+            <li style="margin-bottom: 8px;">Tạo một App mới trong Developer Portal</li>
+            <li style="margin-bottom: 8px;">Trong phần "Keys and tokens", lấy:
+                <ul style="margin-left: 20px; margin-top: 4px;">
+                    <li>API Key (App Key)</li>
+                    <li>API Secret Key (App Secret)</li>
+                    <li>Access Token</li>
+                    <li>Access Token Secret</li>
+                </ul>
+            </li>
+            <li>Dán các keys vào form trên và nhấn "Lưu cấu hình"</li>
+        </ol>
+    </div>
+</div>
+
+<div id="settingsMsg" style="display: none; padding: 16px 20px; border-radius: 4px; margin-top: 16px; font-weight: 500; font-size: 14px; border-left: 4px solid;"></div>
+
+<script>
+function showSettingsMessage(msg, type = 'success') {
+    const el = document.getElementById('settingsMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+    
+    if (type === 'success') {
+        el.style.background = '#d4edda';
+        el.style.color = '#155724';
+        el.style.borderLeftColor = '#28a745';
+    } else {
+        el.style.background = '#f8d7da';
+        el.style.color = '#721c24';
+        el.style.borderLeftColor = '#dc3545';
+    }
+    
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+async function saveKeys() {
+    const appKey = document.getElementById('appKey').value.trim();
+    const appSecret = document.getElementById('appSecret').value.trim();
+    const accessToken = document.getElementById('accessToken').value.trim();
+    const accessSecret = document.getElementById('accessSecret').value.trim();
+
+    if (!appKey || !appSecret || !accessToken || !accessSecret) {
+        return showSettingsMessage('⚠️ Vui lòng nhập đầy đủ tất cả các khóa.', 'error');
+    }
+
+    try {
+        const res = await fetch('/api/twitter/keys', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ appKey, appSecret, accessToken, accessSecret })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Không thể lưu khóa');
+        }
+        showSettingsMessage('✅ Đã lưu cấu hình thành công!', 'success');
+        
+        // Reload settings content after 1.5 seconds
+        setTimeout(() => {
+            if (typeof loadSettings === 'function') {
+                loadSettings();
+            }
+        }, 1500);
+        
+        // Update dashboard stats
+        if (typeof loadDashboardStats === 'function') {
+            loadDashboardStats();
+        }
+    } catch (err) {
+        showSettingsMessage('❌ ' + err.message, 'error');
+    }
+}
+</script>

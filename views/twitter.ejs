@@ -5,8 +5,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%= title %></title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 20px 60px rgba(0, 0, 0, 0.15);
+            --shadow-strong: 0 30px 80px rgba(0, 0, 0, 0.2);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -15,140 +31,257 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary-gradient);
             min-height: 100vh;
             padding: 20px;
             line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background particles */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="60" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="30" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="10" cy="90" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            animation: float 20s infinite linear;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            100% { transform: translateY(-100px) rotate(360deg); }
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
 
-        /* Header */
+        /* Modern Glass Header */
         .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 30px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            border-radius: 24px;
+            padding: 40px;
             margin-bottom: 30px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--glass-border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--secondary-gradient);
+            border-radius: 24px 24px 0 0;
         }
 
         .header h1 {
-            color: #1da1f2;
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 15px;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .header h1 i {
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 48px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
         .nav-links {
             display: flex;
-            gap: 20px;
+            gap: 16px;
             flex-wrap: wrap;
         }
 
         .nav-links a {
-            color: #667eea;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            color: white;
             text-decoration: none;
             font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 12px;
-            transition: all 0.3s ease;
+            padding: 12px 24px;
+            border-radius: 16px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            border: 1px solid var(--glass-border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--success-gradient);
+            transition: left 0.4s ease;
+            z-index: -1;
+        }
+
+        .nav-links a:hover::before {
+            left: 0;
         }
 
         .nav-links a:hover {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            transform: translateY(-2px);
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: var(--shadow-medium);
+            border-color: rgba(255,255,255,0.4);
         }
 
-        /* Cards */
+        /* Modern Glass Cards */
         .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 30px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            border-radius: 24px;
+            padding: 40px;
             margin-bottom: 30px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: transform 0.3s ease;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--glass-border);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--success-gradient);
+            border-radius: 24px 24px 0 0;
         }
 
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-strong);
+            border-color: rgba(255,255,255,0.3);
         }
 
         .card h2 {
-            color: #2d3748;
-            margin-bottom: 20px;
-            font-size: 24px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 24px;
+            font-size: 28px;
             font-weight: 700;
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
-        /* Form Elements */
+        .card h2 i {
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 32px;
+        }
+
+        /* Modern Form Elements */
         .field {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            position: relative;
         }
 
         .field label {
             font-weight: 600;
-            margin-bottom: 8px;
-            color: #2d3748;
-            display: block;
-            font-size: 15px;
+            margin-bottom: 10px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .field input,
         .field textarea,
         .field select {
             width: 100%;
-            padding: 15px 20px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 15px;
-            transition: all 0.3s ease;
+            padding: 18px 24px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            font-size: 16px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             font-family: inherit;
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            color: white;
+            position: relative;
+        }
+
+        .field input::placeholder,
+        .field textarea::placeholder {
+            color: rgba(255,255,255,0.6);
         }
 
         .field input:focus,
         .field textarea:focus,
         .field select:focus {
             outline: none;
-            border-color: #1da1f2;
-            box-shadow: 0 0 0 4px rgba(29, 161, 242, 0.1);
-            background: rgba(255, 255, 255, 1);
+            border-color: rgba(255,255,255,0.6);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
 
-        /* Buttons */
+        /* Modern 3D Buttons */
         .btn {
-            padding: 15px 30px;
+            padding: 18px 36px;
             border: none;
-            border-radius: 12px;
+            border-radius: 16px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 16px;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
             width: 100%;
             text-decoration: none;
             position: relative;
             overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 2px solid transparent;
         }
 
         .btn::before {
@@ -158,138 +291,298 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
         }
 
         .btn:hover::before {
             left: 100%;
         }
 
+        .btn:hover {
+            transform: translateY(-6px) scale(1.02);
+        }
+
         .btn-primary {
-            background: linear-gradient(135deg, #1da1f2 0%, #0d8bd9 100%);
+            background: var(--secondary-gradient);
             color: white;
-            box-shadow: 0 8px 25px rgba(29, 161, 242, 0.3);
+            box-shadow: var(--shadow-soft);
         }
 
         .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(29, 161, 242, 0.4);
+            box-shadow: var(--shadow-medium);
+            border-color: rgba(255,255,255,0.3);
         }
 
         .btn-secondary {
-            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            background: var(--primary-gradient);
             color: white;
             margin-top: 15px;
         }
 
-        .btn-secondary:hover {
-            transform: translateY(-3px);
-        }
-
         .btn-success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            background: var(--success-gradient);
             color: white;
         }
 
         .btn-warning {
-            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            background: var(--warning-gradient);
             color: white;
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            background: var(--danger-gradient);
             color: white;
         }
 
-        /* Messages */
-        .message {
-            display: none;
-            padding: 20px 25px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            font-weight: 500;
-            animation: slideIn 0.4s ease-out;
-            border-left: 5px solid;
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
         }
 
-        @keyframes slideIn {
-            from {
+        /* Modern Messages with Glass Effect */
+        .message {
+            display: none;
+            padding: 24px 30px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+            font-weight: 600;
+            animation: slideInBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes slideInBounce {
+            0% {
                 opacity: 0;
-                transform: translateX(-20px);
+                transform: translateY(-30px) scale(0.8);
             }
-            to {
+            60% {
                 opacity: 1;
-                transform: translateX(0);
+                transform: translateY(5px) scale(1.05);
             }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .message::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            border-radius: 20px 20px 0 0;
         }
 
         .message.success {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            color: #065f46;
-            border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .message.success::before {
+            background: var(--success-gradient);
         }
 
         .message.error {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            color: #991b1b;
-            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
         }
 
-        /* Info Box */
+        .message.error::before {
+            background: var(--danger-gradient);
+        }
+
+        /* Modern Info Box */
         .info-box {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border-left: 5px solid #1da1f2;
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            color: #0c4a6e;
-            font-size: 14px;
+            background: rgba(59, 130, 246, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 20px 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            color: #3b82f6;
+            font-size: 15px;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--success-gradient);
+            border-radius: 16px 16px 0 0;
         }
 
         /* Character Count */
         .char-count {
             text-align: right;
-            font-size: 13px;
-            color: #64748b;
-            margin-top: 8px;
-            font-weight: 500;
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            margin-top: 10px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .char-count.warning {
-            color: #f59e0b;
+            color: #fbbf24;
         }
 
         .char-count.error {
-            color: #ef4444;
+            color: #f87171;
         }
 
-        /* Title List */
-        #titlesList {
-            background: rgba(248, 250, 252, 0.8);
+        /* Special Effects */
+        .auto-post-section {
+            background: var(--primary-gradient);
+            border-radius: 24px;
+            padding: 32px;
+            margin: 24px 0;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .auto-post-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .auto-post-section > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+            background: rgba(255,255,255,0.1);
             padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
-        /* Responsive */
+        .time-slot {
+            text-align: center;
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .time-slot:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-4px);
+        }
+
+        .time-slot-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .time-slot-text {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Modern Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        thead tr {
+            background: var(--secondary-gradient);
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        th {
+            color: white;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 14px;
+        }
+
+        td {
+            color: white;
+            font-weight: 500;
+        }
+
+        tbody tr:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
             .container {
-                padding: 0 10px;
+                padding: 0 15px;
             }
             
             .header, .card {
-                padding: 20px;
+                padding: 24px;
                 margin-bottom: 20px;
+                border-radius: 20px;
             }
             
             .header h1 {
-                font-size: 24px;
+                font-size: 32px;
             }
             
             .nav-links {
                 flex-direction: column;
-                gap: 10px;
+                gap: 12px;
             }
         }
 
@@ -369,14 +662,14 @@
                 <div style="margin-top: 20px; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
                     <div style="text-align: center; margin-bottom: 20px;">
                         <h3 style="color: white; margin-bottom: 10px; font-size: 24px; font-weight: 700;">
-                            <i class="fas fa-rocket"></i> TỰ ĐỘNG LẬP LỊCH 20 BÀI
+                            <i class="fas fa-rocket"></i> TỰ ĐỘNG ĐĂNG 1 BÀI
                         </h3>
                         <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin-bottom: 20px;">
-                            🚀 Lấy API → AI tạo content → Lập lịch cố định → Hiển thị table trạng thái
+                            🚀 Lấy API → AI tạo content → Tải ảnh về → Đăng lên Twitter
                         </p>
                         
                         <button class="btn" onclick="autoCreateSchedule()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; padding: 18px 40px; font-size: 18px; font-weight: 700; border-radius: 12px; box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
-                            <i class="fas fa-magic"></i> BẮT ĐẦU TỰ ĐỘNG
+                            <i class="fas fa-magic"></i> ĐĂNG 1 BÀI NGAY
                         </button>
                     </div>
                     
@@ -447,7 +740,7 @@
                 </div>
                 
                 <div class="info-box">
-                    <i class="fas fa-info-circle"></i> Lấy title và 4 hình ảnh từ mỗi bài viết trong page. Sử dụng "Xử lý tự động" để tự động lập lịch 20 bài trong 5 ngày.
+                    <i class="fas fa-info-circle"></i> Lấy title và 4 hình ảnh từ mỗi bài viết trong page. Tất cả 4 ảnh sẽ được upload trực tiếp lên Twitter (không tải về máy). Sử dụng "TỰ ĐỘNG ĐĂNG 1 BÀI" để đăng ngay.
                 </div>
                 
                 <div id="pageDataList" style="display: none;">
@@ -485,10 +778,10 @@
                 </div>
 
                 <div class="field">
-                    <label><i class="fas fa-images"></i> URL ảnh (mỗi dòng 1 URL, tối đa 4)</label>
-                    <textarea id="imageUrls" rows="4" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg&#10;https://example.com/image3.jpg"></textarea>
+                    <label><i class="fas fa-images"></i> URL ảnh (mỗi dòng 1 URL, tối đa 2)</label>
+                    <textarea id="imageUrls" rows="2" placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"></textarea>
                     <div class="info-box">
-                        <i class="fas fa-camera"></i> Dán URL ảnh trực tiếp (JPG, PNG, GIF, WebP)
+                        <i class="fas fa-camera"></i> Dán URL ảnh trực tiếp (JPG, PNG, GIF, WebP) - Tối đa 4 ảnh sẽ được upload trực tiếp lên Twitter (không tạo file tạm thời)
                     </div>
                 </div>
 
@@ -556,6 +849,9 @@
                 <button class="btn btn-info" onclick="testImageUpload()" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
                     <i class="fas fa-image"></i> Test Upload Ảnh
                 </button>
+                <button class="btn btn-success" onclick="testSimpleUpload()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); margin-left: 10px;">
+                    <i class="fas fa-upload"></i> Test Simple Upload
+                </button>
             </div>
             <div id="scheduledTweetsList">
                 <p style="text-align: center; color: #64748b; font-style: italic;">Nhấn "Tải lại danh sách" để xem các tweet đã lập lịch</p>
@@ -591,16 +887,16 @@
 
         let pageArticles = [];
 
-        // Nội dung tiếng Trung tự động
+        // Nội dung tiếng Trung tự động - Phiên bản ngắn gọn cho Twitter
         const chineseContents = [
-            "🔥 最新热门内容！精选高质量资源，每日更新不间断。专业团队精心制作，为您带来最佳视觉体验。立即访问获取更多精彩内容！",
-            "✨ 独家珍藏版本！超清画质，完整收录，绝对值得收藏。限时免费分享，机会难得不容错过。快来体验顶级品质内容！",
-            "� VIP 专属资源！会员独享特权内容，高端定制服务。精品推荐，品质保证，满足您的所有需求。现在就来探索更多惊喜！",
-            "🎯 热门推荐系列！网友强烈推荐，口碑爆棚的优质内容。每天都有新惊喜，让您享受不一样的精彩体验。不要错过这个机会！",
-            "🌟 精品收藏必备！经典永恒，值得反复品味的优质资源。专业制作团队倾力打造，为您呈现完美视觉盛宴。",
-            "🚀 全网最火内容！病毒式传播，人人都在看的热门资源。高清无码，完整版本，绝对让您满意。立即点击查看更多！",
-            "💯 品质保证系列！严格筛选，只为给您最好的内容体验。每一部都是精心挑选的佳作，保证让您物超所值。",
-            "🎊 限时特惠分享！平时收费内容现在免费开放，数量有限先到先得。这样的机会不多，赶紧把握住这次机会！"
+            "🔥 最新热门内容！精选高质量资源\n\n🎯 立即访问 6868.run\n\n#热门 #精选 #高质量",
+            "✨ 独家珍藏版本！超清画质完整收录\n\n🎯 体验顶级品质 6868.run\n\n#独家 #珍藏 #超清",
+            "💎 VIP专属资源！会员独享特权内容\n\n🎯 探索更多惊喜 6868.run\n\n#VIP #专属 #特权",
+            "🎯 热门推荐系列！网友强烈推荐\n\n🎯 享受精彩体验 6868.run\n\n#推荐 #口碑 #优质",
+            "🌟 精品收藏必备！经典永恒品质\n\n🎯 发现更多精品 6868.run\n\n#精品 #经典 #永恒",
+            "🚀 全网最火内容！病毒式传播\n\n🎯 立即查看更多 6868.run\n\n#全网最火 #病毒传播 #热门",
+            "💯 品质保证系列！严格筛选佳作\n\n🎯 体验最佳内容 6868.run\n\n#品质保证 #精选 #佳作",
+            "🎊 限时特惠分享！免费开放\n\n🎯 把握机会访问 6868.run\n\n#限时特惠 #免费 #机会"
         ];
 
         function clearAll() {
@@ -700,6 +996,7 @@
             // Điền images
             const imageUrlsElement = document.getElementById('imageUrls');
             if (article.images && article.images.length > 0) {
+                // Take all 4 images
                 const imageUrls = article.images.slice(0, 4).join('\n');
                 imageUrlsElement.value = imageUrls;
             } else {
@@ -724,8 +1021,9 @@
             }, 100);
 
             const shortTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
-            const imageCount = article.images ? article.images.length : 0;
-            showMessage(`✅ Đã sử dụng nội dung AI: ${shortTitle} | ${imageCount} ảnh`, 'success');
+            // Calculate actual images that will be used (all 4 images)
+            const actualImageCount = article.images ? Math.min(article.images.length, 4) : 0;
+            showMessage(`✅ Đã sử dụng nội dung AI: ${shortTitle} | ${actualImageCount} ảnh`, 'success');
         }
 
         function getRandomChineseContent() {
@@ -1297,7 +1595,8 @@
                 };
 
                 const title = article.title || 'Không có tiêu đề';
-                const imageCount = article.images ? article.images.length : 0;
+                // Calculate actual images that will be used (all 4 images)
+                const imageCount = article.images ? Math.min(article.images.length, 4) : 0;
                 
                 // Tạo preview ảnh nhỏ
                 let imagePreview = '';
@@ -1724,6 +2023,41 @@
                 while (scheduled.getTime() <= Date.now()) scheduled.setDate(scheduled.getDate() + 1);
                 const el = document.getElementById(`sched-${i}`);
                 if (el) el.textContent = scheduled.toLocaleString();
+            }
+        }
+
+        // Test simple upload function
+        async function testSimpleUpload() {
+            const testImageUrl = 'https://p22.k00ppc.com/i/2022/10/15/pr13yb.jpg';
+            
+            if (!confirm(`🧪 Test simple upload ảnh?\n\nSẽ test upload đơn giản từ:\n${testImageUrl}\n\nXác nhận tiếp tục?`)) {
+                return;
+            }
+
+            try {
+                showMessage('🧪 Đang test simple upload...', 'success');
+
+                const res = await fetch('/api/test/simple-upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        imageUrl: testImageUrl
+                    })
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Test simple upload thất bại');
+                }
+
+                const resultMessage = `✅ Test direct buffer upload thành công!\n\n📊 Chi tiết:\n• Media ID: ${data.mediaId}\n• Kích thước: ${Math.round(data.imageSize / 1024)} KB\n• URL test: ${testImageUrl}\n• Phương pháp: Upload trực tiếp (không tạo file)`;
+                
+                showMessage(resultMessage, 'success');
+                console.log('🧪 Simple upload result:', data);
+
+            } catch (err) {
+                console.error('❌ Simple upload error:', err);
+                showMessage('❌ Test simple upload thất bại: ' + err.message, 'error');
             }
         }
 

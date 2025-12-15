@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Twitter Auto Post</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #000000;
+            --text-secondary: #6c757d;
+            --border-color: #e9ecef;
+            --accent-color: #000000;
+            --hover-bg: #f8f9fa;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --sidebar-width: 250px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Dashboard Layout */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header h2 {
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: var(--hover-bg);
+        }
+
+        .nav-item.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .nav-item i {
+            width: 20px;
+            margin-right: 12px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 24px;
+        }
+
+        .content-header {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .content-header h1 {
+            color: var(--text-primary);
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .content-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .stat-card-title {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .stat-card-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-color);
+        }
+
+        .stat-card-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .stat-card-change {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .card h2 {
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 1000;
+                background: var(--bg-primary);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                padding: 12px;
+                cursor: pointer;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mobile-menu-btn {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Mobile Menu Button -->
+        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fab fa-twitter"></i> Twitter Auto</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" onclick="showSection('dashboard')">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </button>
+                <button class="nav-item" onclick="showSection('post')">
+                    <i class="fas fa-edit"></i> Post
+                </button>
+                <button class="nav-item" onclick="showSection('schedule')">
+                    <i class="fas fa-calendar"></i> Lịch đăng
+                </button>
+                <button class="nav-item" onclick="showSection('tweets')">
+                    <i class="fas fa-list"></i> Danh sách Tweet
+                </button>
+                <button class="nav-item" onclick="showSection('settings')">
+                    <i class="fas fa-cog"></i> Cài đặt
+                </button>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="content-section active">
+                <div class="content-header">
+                    <h1>Dashboard</h1>
+                    <p>Tổng quan hệ thống Twitter Auto Post</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Tổng Tweet</span>
+                            <div class="stat-card-icon">
+                                <i class="fab fa-twitter"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card-value" id="totalTweets">0</div>
+                        <div class="stat-card-change">Tất cả thời gian</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Tweet hôm nay</span>
+                            <div class="stat-card-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card-value" id="todayTweets">0</div>
+                        <div class="stat-card-change">Trong 24h qua</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Lịch đăng</span>
+                            <div class="stat-card-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card-value" id="scheduledTweets">0</div>
+                        <div class="stat-card-change">Đang chờ đăng</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Bài viết API</span>
+                            <div class="stat-card-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card-value" id="apiArticles">0</div>
+                        <div class="stat-card-change">Đã xử lý</div>
+                    </div>
+                </div>
+
+                <!-- Twitter Account Stats -->
+                <div class="stats-grid" style="margin-bottom: 24px;">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Followers</span>
+                            <div class="stat-card-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card-value" id="followersCount">-</div>
+                        <div class="stat-card-change">Twitter Account</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Following</span>
+                            <div class="stat-card-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card-value" id="followingCount">-</div>
+                        <div class="stat-card-change">Đang theo dõi</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Tweets</span>
+                            <div class="stat-card-icon">
+                                <i class="fab fa-twitter"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card-value" id="tweetCount">-</div>
+                        <div class="stat-card-change">Tổng tweet</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Account</span>
+                            <div class="stat-card-icon">
+                                <i class="fas fa-at"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card-value" id="username" style="font-size: 18px;">-</div>
+                        <div class="stat-card-change">
+                            Username 
+                            <button onclick="loadTwitterAccountInfo()" style="margin-left: 8px; background: none; border: 1px solid var(--border-color); border-radius: 4px; padding: 2px 6px; cursor: pointer; font-size: 10px;" title="Refresh thông tin account">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2><i class="fas fa-chart-line"></i> Hoạt động gần đây</h2>
+                    <div id="recentActivity">
+                        <p style="color: var(--text-secondary); text-align: center; padding: 40px;">
+                            Chưa có hoạt động nào
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Post Section -->
+            <div id="post" class="content-section">
+                <div class="content-header">
+                    <h1>Đăng Tweet</h1>
+                    <p>Quản lý và đăng tweet tự động</p>
+                </div>
+                
+                <!-- Post content will be loaded here -->
+                <div id="postContent">
+                    <p style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                        Đang tải nội dung...
+                    </p>
+                </div>
+            </div>
+
+            <!-- Schedule Section -->
+            <div id="schedule" class="content-section">
+                <div class="content-header">
+                    <h1>Lịch đăng</h1>
+                    <p>Quản lý các tweet đã lập lịch</p>
+                </div>
+                
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2><i class="fas fa-list"></i> Tweet đã lập lịch</h2>
+                        <button onclick="createTestScheduledTweet()" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                            <i class="fas fa-plus"></i> Tạo test tweet
+                        </button>
+                    </div>
+                    <div id="scheduledList">
+                        <p style="color: var(--text-secondary); text-align: center; padding: 40px;">
+                            Chưa có tweet nào được lập lịch
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tweets List Section -->
+            <div id="tweets" class="content-section">
+                <div class="content-header">
+                    <h1>Danh sách Tweet</h1>
+                    <p>Quản lý các tweet đã đăng và đang chờ đăng</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <!-- Posted Tweets -->
+                    <div class="card">
+                        <h2><i class="fab fa-twitter"></i> Tweet đã đăng</h2>
+                        <div id="postedTweetsStats" style="margin-bottom: 15px; padding: 10px; background: var(--bg-secondary); border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Tổng số: <strong id="postedTotal">0</strong></span>
+                                <span>Thành công: <strong id="postedSuccess">0</strong></span>
+                                <span>Hôm nay: <strong id="postedToday">0</strong></span>
+                            </div>
+                        </div>
+                        <div id="postedTweetsList" style="max-height: 400px; overflow-y: auto;">
+                            <p style="color: var(--text-secondary); text-align: center; padding: 40px;">
+                                Đang tải danh sách tweet đã đăng...
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Scheduled Tweets -->
+                    <div class="card">
+                        <h2><i class="fas fa-clock"></i> Tweet đang chờ</h2>
+                        <div id="scheduledTweetsStats" style="margin-bottom: 15px; padding: 10px; background: var(--bg-secondary); border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Tổng số: <strong id="scheduledTotal">0</strong></span>
+                                <span>Đang chờ: <strong id="scheduledPending">0</strong></span>
+                                <span>Sắp tới: <strong id="scheduledUpcoming">0</strong></span>
+                            </div>
+                        </div>
+                        <div id="scheduledTweetsList" style="max-height: 400px; overflow-y: auto;">
+                            <p style="color: var(--text-secondary); text-align: center; padding: 40px;">
+                                Đang tải danh sách tweet đang chờ...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings" class="content-section">
+                <div class="content-header">
+                    <h1>Cài đặt</h1>
+                    <p>Cấu hình hệ thống và API keys</p>
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-key"></i> Twitter API Keys</h2>
+                    <div id="settingsContent">
+                        <p style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                            Đang tải cài đặt...
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to clicked nav item
+            event.target.classList.add('active');
+            
+            // Load content based on section
+            loadSectionContent(sectionId);
+            
+            // Close sidebar on mobile
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        function loadSectionContent(sectionId) {
+            switch(sectionId) {
+                case 'dashboard':
+                    loadDashboardStats();
+                    break;
+                case 'post':
+                    loadPostContent();
+                    break;
+                case 'schedule':
+                    loadScheduledTweets();
+                    break;
+                case 'tweets':
+                    loadTweetsList();
+                    break;
+                case 'settings':
+                    loadSettings();
+                    break;
+            }
+        }
+
+        async function loadDashboardStats() {
+            try {
+                // Load dashboard statistics
+                const response = await fetch('/api/dashboard/stats');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    document.getElementById('totalTweets').textContent = data.totalTweets || 0;
+                    document.getElementById('todayTweets').textContent = data.todayTweets || 0;
+                    document.getElementById('scheduledTweets').textContent = data.scheduledTweets || 0;
+                    document.getElementById('apiArticles').textContent = data.apiArticles || 0;
+                    
+                    // Load recent activity
+                    if (data.recentActivity && data.recentActivity.length > 0) {
+                        let activityHtml = '';
+                        data.recentActivity.forEach(activity => {
+                            activityHtml += `
+                                <div style="padding: 12px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+                                    <i class="${activity.icon}" style="color: var(--accent-color);"></i>
+                                    <div>
+                                        <div style="font-weight: 500;">${activity.title}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">${activity.time}</div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        document.getElementById('recentActivity').innerHTML = activityHtml;
+                    }
+                }
+                
+                // Load Twitter account info
+                loadTwitterAccountInfo();
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+            }
+        }
+
+        async function loadTwitterAccountInfo() {
+            try {
+                let response = await fetch('/api/twitter/account-info');
+                let data = null;
+                
+                if (response.ok) {
+                    data = await response.json();
+                }
+                
+                // If rate limited or failed, try test endpoint
+                if (!data || !data.success || data.rateLimited) {
+                    console.log('Trying test endpoint due to rate limit or error');
+                    response = await fetch('/api/test/twitter-account');
+                    if (response.ok) {
+                        data = await response.json();
+                    }
+                }
+                
+                if (data && data.success) {
+                    document.getElementById('followersCount').textContent = formatNumber(data.followers);
+                    document.getElementById('followingCount').textContent = formatNumber(data.following);
+                    document.getElementById('tweetCount').textContent = formatNumber(data.tweets);
+                    document.getElementById('username').textContent = '@' + data.username;
+                    
+                    // Show indicator if using cached or mock data
+                    if (data.cached || data.mock) {
+                        const indicator = data.cached ? ' (cached)' : ' (demo)';
+                        document.getElementById('username').textContent += indicator;
+                    }
+                } else {
+                    // Show error state
+                    document.getElementById('followersCount').textContent = '-';
+                    document.getElementById('followingCount').textContent = '-';
+                    document.getElementById('tweetCount').textContent = '-';
+                    document.getElementById('username').textContent = 'Chưa kết nối';
+                }
+            } catch (error) {
+                console.error('Error loading Twitter account info:', error);
+                // Show error state
+                document.getElementById('followersCount').textContent = 'Lỗi';
+                document.getElementById('followingCount').textContent = 'Lỗi';
+                document.getElementById('tweetCount').textContent = 'Lỗi';
+                document.getElementById('username').textContent = 'Lỗi kết nối';
+            }
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        async function loadPostContent() {
+            try {
+                const response = await fetch('/dashboard/post-content');
+                if (response.ok) {
+                    const html = await response.text();
+                    document.getElementById('postContent').innerHTML = html;
+                    
+                    // Execute scripts after loading content
+                    executePostScripts();
+                }
+            } catch (error) {
+                console.error('Error loading post content:', error);
+                document.getElementById('postContent').innerHTML = '<p style="color: red; text-align: center;">Lỗi tải nội dung</p>';
+            }
+        }
+
+        // Execute scripts for post section
+        function executePostScripts() {
+            // No scripts to execute since all JavaScript is now in dashboard.ejs
+            // Just ensure the message element is available
+            if (!document.getElementById('msg')) {
+                console.log('Message element not found in post content');
+            }
+        }
+
+        async function loadScheduledTweets() {
+            try {
+                const response = await fetch('/api/twitter/scheduled');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.tweets && data.tweets.length > 0) {
+                        let html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse;">';
+                        html += '<thead><tr style="background: var(--bg-secondary);"><th style="padding: 12px; text-align: left;">Nội dung</th><th style="padding: 12px; text-align: center;">Thời gian</th><th style="padding: 12px; text-align: center;">Thao tác</th></tr></thead><tbody>';
+                        
+                        data.tweets.forEach(tweet => {
+                            const time = new Date(tweet.scheduledTime).toLocaleString('vi-VN');
+                            html += `
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <td style="padding: 12px; max-width: 300px;">${tweet.text.substring(0, 100)}...</td>
+                                    <td style="padding: 12px; text-align: center;">${time}</td>
+                                    <td style="padding: 12px; text-align: center;">
+                                        <button onclick="cancelTweet(${tweet.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Hủy</button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        
+                        html += '</tbody></table></div>';
+                        document.getElementById('scheduledList').innerHTML = html;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading scheduled tweets:', error);
+            }
+        }
+
+        async function loadTweetsList() {
+            try {
+                // Load posted tweets
+                const postedResponse = await fetch('/api/tweets/posted?limit=50');
+                if (postedResponse.ok) {
+                    const postedData = await postedResponse.json();
+                    if (postedData.success) {
+                        // Update stats
+                        document.getElementById('postedTotal').textContent = postedData.stats.total;
+                        document.getElementById('postedSuccess').textContent = postedData.stats.success;
+                        document.getElementById('postedToday').textContent = postedData.stats.today;
+                        
+                        // Update list
+                        if (postedData.tweets && postedData.tweets.length > 0) {
+                            let html = '';
+                            postedData.tweets.forEach(tweet => {
+                                const statusColor = tweet.status === 'SUCCESS' ? '#28a745' : '#dc3545';
+                                const statusText = tweet.status === 'SUCCESS' ? 'Thành công' : 'Lỗi';
+                                html += `
+                                    <div style="padding: 12px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 500; margin-bottom: 4px;">${tweet.content}</div>
+                                            <div style="font-size: 12px; color: var(--text-secondary);">
+                                                ${tweet.timeFormatted} • ${tweet.imageCount} ảnh
+                                            </div>
+                                        </div>
+                                        <div style="margin-left: 12px;">
+                                            <span style="background: ${statusColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">
+                                                ${statusText}
+                                            </span>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            document.getElementById('postedTweetsList').innerHTML = html;
+                        } else {
+                            document.getElementById('postedTweetsList').innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Chưa có tweet nào được đăng</p>';
+                        }
+                    }
+                }
+
+                // Load scheduled tweets
+                const scheduledResponse = await fetch('/api/tweets/scheduled');
+                if (scheduledResponse.ok) {
+                    const scheduledData = await scheduledResponse.json();
+                    if (scheduledData.success) {
+                        // Update stats
+                        document.getElementById('scheduledTotal').textContent = scheduledData.stats.total;
+                        document.getElementById('scheduledPending').textContent = scheduledData.stats.pending;
+                        document.getElementById('scheduledUpcoming').textContent = scheduledData.stats.upcoming;
+                        
+                        // Update list
+                        if (scheduledData.tweets && scheduledData.tweets.length > 0) {
+                            let html = '';
+                            scheduledData.tweets.forEach(tweet => {
+                                const statusColor = tweet.status === 'PENDING' ? '#ffc107' : '#6c757d';
+                                const statusText = tweet.status === 'PENDING' ? 'Đang chờ' : tweet.status;
+                                html += `
+                                    <div style="padding: 12px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 500; margin-bottom: 4px;">${tweet.content}</div>
+                                            <div style="font-size: 12px; color: var(--text-secondary);">
+                                                ${tweet.scheduledTimeFormatted} • ${tweet.imageCount} ảnh
+                                            </div>
+                                        </div>
+                                        <div style="margin-left: 12px; display: flex; align-items: center; gap: 8px;">
+                                            <span style="background: ${statusColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;">
+                                                ${statusText}
+                                            </span>
+                                            <button onclick="cancelTweet(${tweet.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                                                Hủy
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            document.getElementById('scheduledTweetsList').innerHTML = html;
+                        } else {
+                            document.getElementById('scheduledTweetsList').innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">Chưa có tweet nào được lập lịch</p>';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading tweets list:', error);
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/dashboard/settings-content');
+                if (response.ok) {
+                    const html = await response.text();
+                    document.getElementById('settingsContent').innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                document.getElementById('settingsContent').innerHTML = '<p style="color: red; text-align: center;">Lỗi tải cài đặt</p>';
+            }
+        }
+
+        async function cancelTweet(tweetId) {
+            if (!confirm('Bạn có chắc muốn hủy tweet này?')) return;
+            
+            try {
+                const response = await fetch(`/api/twitter/scheduled/${tweetId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Show success message
+                    if (result.success) {
+                        showMessage('✅ Đã hủy tweet thành công!', 'success');
+                    }
+                    
+                    // Update all relevant sections
+                    loadScheduledTweets(); // Reload schedule section
+                    loadDashboardStats(); // Update dashboard stats
+                    
+                    // Update tweets list section if it's currently active
+                    const tweetsSection = document.getElementById('tweets');
+                    if (tweetsSection && tweetsSection.classList.contains('active')) {
+                        loadTweetsList();
+                    }
+                } else {
+                    const result = await response.json();
+                    showMessage('❌ Lỗi: ' + (result.error || 'Không thể hủy tweet'), 'error');
+                }
+            } catch (error) {
+                console.error('Error canceling tweet:', error);
+                showMessage('❌ Lỗi kết nối khi hủy tweet', 'error');
+            }
+        }
+
+        // Helper function to show messages
+        function showMessage(message, type = 'info') {
+            // Create message element
+            const messageEl = document.createElement('div');
+            messageEl.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                max-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
+            `;
+            messageEl.textContent = message;
+            
+            document.body.appendChild(messageEl);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (messageEl.parentNode) {
+                    messageEl.parentNode.removeChild(messageEl);
+                }
+            }, 3000);
+        }
+
+        // Create test scheduled tweet
+        async function createTestScheduledTweet() {
+            try {
+                showMessage('🔄 Đang tạo test tweet...', 'info');
+                
+                const response = await fetch('/api/test/schedule-tweet', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        showMessage(result.message, 'success');
+                        
+                        // Update all relevant sections
+                        loadScheduledTweets();
+                        loadDashboardStats();
+                        
+                        // Update tweets list if active
+                        const tweetsSection = document.getElementById('tweets');
+                        if (tweetsSection && tweetsSection.classList.contains('active')) {
+                            loadTweetsList();
+                        }
+                    } else {
+                        showMessage('❌ Lỗi: ' + result.error, 'error');
+                    }
+                } else {
+                    showMessage('❌ Lỗi kết nối khi tạo test tweet', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating test tweet:', error);
+                showMessage('❌ Lỗi kết nối', 'error');
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardStats();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        });
+
+        // ===== POST SECTION JAVASCRIPT =====
+        // Global variables for post section
+        let pageArticles = [];
+        let currentUsedIndex = -1;
+        let allArticlesContent = [];
+
+        // Nội dung tiếng Trung tự động
+        const chineseContents = [
+            "🔥 最新热门内容！精选高质量资源\n\n🎯 立即访问 6868.run\n\n#热门 #精选 #高质量",
+            "✨ 独家珍藏版本！超清画质完整收录\n\n🎯 体验顶级品质 6868.run\n\n#独家 #珍藏 #超清",
+            "💎 VIP专属资源！会员独享特权内容\n\n🎯 探索更多惊喜 6868.run\n\n#VIP #专属 #特权",
+            "🎯 热门推荐系列！网友强烈推荐\n\n🎯 享受精彩体验 6868.run\n\n#推荐 #口碑 #优质",
+            "🌟 精品收藏必备！经典永恒品质\n\n🎯 发现更多精品 6868.run\n\n#精品 #经典 #永恒",
+            "🚀 全网最火内容！病毒式传播\n\n🎯 立即查看更多 6868.run\n\n#全网最火 #病毒传播 #热门",
+            "💯 品质保证系列！严格筛选佳作\n\n🎯 体验最佳内容 6868.run\n\n#品质保证 #精选 #佳作",
+            "🎊 限时特惠分享！免费开放\n\n🎯 把握机会访问 6868.run\n\n#限时特惠 #免费 #机会"
+        ];
+
+        function getRandomChineseContent() {
+            return chineseContents[Math.floor(Math.random() * chineseContents.length)];
+        }
+
+        function showPostMessage(msg, type = 'success') {
+            const el = document.getElementById('msg');
+            if (!el) {
+                console.log('Message element not found, using console:', msg);
+                return;
+            }
+            
+            el.textContent = msg;
+            el.style.display = 'block';
+            
+            if (type === 'success') {
+                el.style.background = '#d4edda';
+                el.style.color = '#155724';
+                el.style.borderLeftColor = '#28a745';
+            } else {
+                el.style.background = '#f8d7da';
+                el.style.color = '#721c24';
+                el.style.borderLeftColor = '#dc3545';
+            }
+            
+            setTimeout(() => { el.style.display = 'none'; }, 5000);
+        }
+
+        function updateCharCount() {
+            const text = document.getElementById('tweetText');
+            const el = document.getElementById('charCount');
+            if (!text || !el) return;
+            
+            const count = text.value.length;
+            el.textContent = `${count} / 280`;
+
+            if (count > 280) {
+                el.style.color = '#dc3545';
+            } else if (count > 250) {
+                el.style.color = '#ffc107';
+            } else {
+                el.style.color = 'var(--text-secondary)';
+            }
+        }
+
+        function previewImages() {
+            const imageUrls = document.getElementById('imageUrls');
+            const previewArea = document.getElementById('imagePreviewArea');
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            
+            if (!imageUrls || !previewArea || !previewContainer) return;
+            
+            const urls = imageUrls.value.split('\n')
+                .map(u => u.trim())
+                .filter(u => u && u.startsWith('http'))
+                .slice(0, 4);
+            
+            if (urls.length === 0) {
+                previewArea.style.display = 'none';
+                return;
+            }
+            
+            previewArea.style.display = 'block';
+            previewContainer.innerHTML = '';
+            
+            urls.forEach((url, index) => {
+                const imgContainer = document.createElement('div');
+                imgContainer.style.cssText = 'position: relative; display: inline-block;';
+                
+                const img = document.createElement('img');
+                img.src = url;
+                img.style.cssText = 'width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 2px solid var(--border-color);';
+                img.title = `Ảnh ${index + 1}: ${url}`;
+                
+                const label = document.createElement('div');
+                label.textContent = index + 1;
+                label.style.cssText = 'position: absolute; top: -8px; right: -8px; background: var(--accent-color); color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold;';
+                
+                img.onerror = function() {
+                    imgContainer.innerHTML = `
+                        <div style="width: 80px; height: 80px; background: #f8d7da; border: 2px solid #dc3545; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #721c24; font-size: 10px; text-align: center;">
+                            Lỗi tải ảnh ${index + 1}
+                        </div>
+                    `;
+                };
+                
+                imgContainer.appendChild(img);
+                imgContainer.appendChild(label);
+                previewContainer.appendChild(imgContainer);
+            });
+            
+            // Show count
+            const countInfo = document.createElement('div');
+            countInfo.style.cssText = 'width: 100%; text-align: center; color: var(--text-secondary); font-size: 12px; margin-top: 8px;';
+            countInfo.textContent = `${urls.length}/4 ảnh sẽ được đăng lên Twitter`;
+            previewContainer.appendChild(countInfo);
+        }
+
+        function clearAll() {
+            const tweetText = document.getElementById('tweetText');
+            const imageUrls = document.getElementById('imageUrls');
+            const pageDataList = document.getElementById('pageDataList');
+            const articlesTableBody = document.getElementById('articlesTableBody');
+            const previewArea = document.getElementById('imagePreviewArea');
+            
+            if (tweetText) tweetText.value = '';
+            if (imageUrls) imageUrls.value = '';
+            if (pageDataList) pageDataList.style.display = 'none';
+            if (articlesTableBody) articlesTableBody.innerHTML = '';
+            if (previewArea) previewArea.style.display = 'none';
+            
+            pageArticles = [];
+            allArticlesContent = [];
+            currentUsedIndex = -1;
+            updateCharCount();
+        }
+
+        function toggleSchedule() {
+            const section = document.getElementById('scheduleSection');
+            if (!section) return;
+            
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                
+                // Set default date/time (1 hour from now)
+                const now = new Date();
+                now.setHours(now.getHours() + 1);
+                
+                const scheduleDate = document.getElementById('scheduleDate');
+                const scheduleTime = document.getElementById('scheduleTime');
+                
+                if (scheduleDate) scheduleDate.value = now.toISOString().split('T')[0];
+                if (scheduleTime) scheduleTime.value = now.toTimeString().slice(0, 5);
+            } else {
+                section.style.display = 'none';
+            }
+        }
+
+        async function fetchPageData() {
+            const baseUrl = document.getElementById('apiBaseUrl');
+            const page = document.getElementById('apiPage');
+            const limit = document.getElementById('apiLimit');
+
+            if (!baseUrl || !baseUrl.value.trim()) {
+                return showPostMessage('⚠️ Vui lòng nhập URL API.', 'error');
+            }
+
+            try {
+                showPostMessage(`📡 Đang lấy ${limit.value} bài từ page ${page.value}...`, 'success');
+
+                const apiUrl = baseUrl.value.trim() + '&pg=' + page.value;
+                const res = await fetch('/api/fetch-page-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        apiUrl: apiUrl,
+                        limit: limit.value 
+                    })
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể lấy dữ liệu từ API');
+                }
+
+                pageArticles = data.articles;
+                console.log('📋 Dữ liệu pageArticles:', pageArticles);
+                displayArticlesTable(data.articles);
+
+                const pageDataList = document.getElementById('pageDataList');
+                if (pageDataList) pageDataList.style.display = 'block';
+                
+                showPostMessage(`✅ Đã lấy ${data.articles.length}/${limit.value} bài viết từ page ${page.value}!`, 'success');
+
+                // Tự động tạo nội dung cho tất cả bài viết
+                if (data.articles.length > 0) {
+                    showPostMessage(`📝 Đang tự động tạo nội dung cho ${data.articles.length} bài viết...`, 'success');
+                    setTimeout(() => {
+                        generateAllArticlesContent();
+                    }, 500);
+                }
+            } catch (err) {
+                console.error(err);
+                showPostMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        async function generateAllArticlesContent() {
+            allArticlesContent = [];
+            
+            for (let i = 0; i < pageArticles.length; i++) {
+                const article = pageArticles[i];
+                const title = article.title || 'Không có tiêu đề';
+                
+                showPostMessage(`📝 Tạo nội dung cho bài ${i + 1}/${pageArticles.length}: ${title.substring(0, 30)}...`, 'success');
+                
+                // Use predefined Chinese content directly
+                const aiContent = getRandomChineseContent();
+                allArticlesContent[i] = aiContent;
+                updateArticleRowStatus(i, 'completed');
+                
+                if (i < pageArticles.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+            
+            useArticleWithPreGeneratedContent(0);
+            showPostMessage(`✅ Đã tạo xong nội dung cho ${pageArticles.length} bài viết!`, 'success');
+        }
+
+        function displayArticlesTable(articles) {
+            const tbody = document.getElementById('articlesTableBody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+
+            articles.forEach((article, index) => {
+                const row = document.createElement('tr');
+                row.id = `article-row-${index}`;
+                
+                const isFirst = index === 0;
+                const baseStyle = isFirst ? 
+                    'border-bottom: 1px solid var(--border-color); transition: background-color 0.2s; background-color: var(--hover-bg);' :
+                    'border-bottom: 1px solid var(--border-color); transition: background-color 0.2s;';
+                
+                row.style.cssText = baseStyle;
+                row.onmouseover = function() { 
+                    if (currentUsedIndex !== index) {
+                        this.style.backgroundColor = 'var(--hover-bg)'; 
+                    }
+                };
+                row.onmouseout = function() { 
+                    if (currentUsedIndex === index) {
+                        this.style.backgroundColor = 'var(--bg-secondary)';
+                    } else if (index === 0 && currentUsedIndex === -1) {
+                        this.style.backgroundColor = 'var(--hover-bg)';
+                    } else {
+                        this.style.backgroundColor = 'transparent';
+                    }
+                };
+
+                const title = article.title || 'Không có tiêu đề';
+                const imageCount = article.images ? Math.min(article.images.length, 4) : 0;
+                
+                let imagePreview = '';
+                if (article.images && article.images.length > 0) {
+                    const imagesToShow = article.images.slice(0, 4);
+                    imagePreview = '<div style="display: flex; gap: 2px; flex-wrap: wrap; width: 120px;">';
+                    imagesToShow.forEach((img, i) => {
+                        imagePreview += `<img src="${img}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 2px; border: 1px solid var(--border-color);" onerror="this.style.display='none'" title="Ảnh ${i+1}">`;
+                    });
+                    imagePreview += '</div>';
+                } else {
+                    imagePreview = '<div style="width: 60px; height: 40px; background: var(--bg-secondary); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 12px;">No img</div>';
+                }
+
+                const statusBadge = isFirst ? 
+                    '<span style="background: #ffc107; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 8px;">AUTO</span>' : '';
+
+                row.innerHTML = `
+                    <td style="padding: 15px; font-weight: 600; color: var(--text-primary);">${index + 1}${statusBadge}</td>
+                    <td style="padding: 15px; max-width: 300px;">
+                        <div style="font-weight: 500; color: var(--text-primary); line-height: 1.4;">
+                            ${title.length > 80 ? title.substring(0, 80) + '...' : title}
+                        </div>
+                    </td>
+                    <td style="padding: 15px; text-align: center;">
+                        ${imagePreview}
+                    </td>
+                    <td style="padding: 15px; text-align: center;">
+                        <span style="background: ${imageCount > 0 ? '#28a745' : '#6c757d'}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">
+                            ${imageCount}
+                        </span>
+                    </td>
+                    <td style="padding: 15px; text-align: center;">
+                        <button onclick="useArticle(${index})" style="background: #ffc107; color: #000; border: 1px solid #ffc107; padding: 8px 16px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                            <i class="fas fa-arrow-down"></i> Sử dụng
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateArticleRowStatus(index, status) {
+            const row = document.getElementById(`article-row-${index}`);
+            if (!row) return;
+            
+            const statusCell = row.cells[0];
+            const currentContent = statusCell.innerHTML;
+            
+            let statusBadge = '';
+            if (status === 'completed') {
+                statusBadge = '<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 8px;">✓ OK</span>';
+            } else if (status === 'error') {
+                statusBadge = '<span style="background: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 8px;">⚠ ERR</span>';
+            }
+            
+            const cleanContent = currentContent.replace(/<span[^>]*>(AUTO|✓ AI|⚠ TPL)<\/span>/g, '');
+            statusCell.innerHTML = cleanContent + statusBadge;
+        }
+
+        async function useArticle(index) {
+            if (allArticlesContent[index]) {
+                useArticleWithPreGeneratedContent(index);
+                return;
+            }
+            
+            const article = pageArticles[index];
+            if (!article) {
+                console.error('❌ Không tìm thấy bài viết tại index:', index);
+                return showPostMessage('❌ Không tìm thấy bài viết!', 'error');
+            }
+
+            const title = article.title || 'Không có tiêu đề';
+            showPostMessage('📝 Đang tạo nội dung theo tiêu đề...', 'success');
+
+            // Use predefined Chinese content directly
+            const chineseContent = getRandomChineseContent();
+            allArticlesContent[index] = chineseContent;
+            updateArticleRowStatus(index, 'completed');
+            
+            useArticleWithPreGeneratedContent(index);
+        }
+
+        function useArticleWithPreGeneratedContent(index) {
+            const article = pageArticles[index];
+            if (!article) return;
+
+            const title = article.title || 'Không có tiêu đề';
+            const aiContent = allArticlesContent[index] || getRandomChineseContent();
+            
+            const tweetTextElement = document.getElementById('tweetText');
+            if (tweetTextElement) {
+                const tweetContent = `${title}\n\n${aiContent}`;
+                tweetTextElement.value = tweetContent;
+                updateCharCount();
+            }
+
+            const imageUrlsElement = document.getElementById('imageUrls');
+            if (imageUrlsElement) {
+                if (article.images && article.images.length > 0) {
+                    const imageUrls = article.images.slice(0, 4).join('\n');
+                    imageUrlsElement.value = imageUrls;
+                    // Trigger preview
+                    previewImages();
+                } else {
+                    imageUrlsElement.value = '';
+                    // Hide preview
+                    const previewArea = document.getElementById('imagePreviewArea');
+                    if (previewArea) previewArea.style.display = 'none';
+                }
+            }
+
+            if (currentUsedIndex >= 0) {
+                const oldRow = document.getElementById(`article-row-${currentUsedIndex}`);
+                if (oldRow) oldRow.style.backgroundColor = 'transparent';
+            }
+            currentUsedIndex = index;
+            const currentRow = document.getElementById(`article-row-${index}`);
+            if (currentRow) currentRow.style.backgroundColor = 'var(--bg-secondary)';
+
+            setTimeout(() => {
+                const tweetCard = document.querySelector('.card:last-child');
+                if (tweetCard) {
+                    tweetCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+
+            const shortTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
+            const actualImageCount = article.images ? Math.min(article.images.length, 4) : 0;
+            showPostMessage(`✅ Đã sử dụng nội dung AI: ${shortTitle} | ${actualImageCount} ảnh`, 'success');
+        }
+
+        async function autoCreateSchedule() {
+            const baseUrl = document.getElementById('apiBaseUrl');
+            const page = document.getElementById('apiPage');
+            const limit = document.getElementById('apiLimit');
+
+            if (!baseUrl || !baseUrl.value.trim()) {
+                return showPostMessage('⚠️ Vui lòng nhập URL API.', 'error');
+            }
+
+            if (!confirm(`🚀 TỰ ĐỘNG ĐĂNG 1 BÀI\n\n📋 Quy trình:\n• Lấy 1 bài từ API (page ${page.value})\n• Sử dụng nội dung tiếng Trung có sẵn\n• Upload 4 ảnh trực tiếp\n• Đăng lên Twitter ngay\n\n✅ Xác nhận tiếp tục?`)) {
+                return;
+            }
+
+            try {
+                showPostMessage('🚀 Đang tự động đăng 1 bài...', 'success');
+
+                const res = await fetch('/api/auto-post-now', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        apiUrl: baseUrl.value.trim(),
+                        page: page.value,
+                        limit: limit.value
+                    })
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể tự động đăng');
+                }
+
+                let successMsg = `🎉 ${data.message}`;
+                if (data.tweetId) {
+                    successMsg += `\n\n📊 Chi tiết:\n• Tweet ID: ${data.tweetId}\n• Tiêu đề: ${data.title}\n• Số ảnh: ${data.imageCount}`;
+                }
+                
+                showPostMessage(successMsg, 'success');
+                
+                // Update dashboard stats
+                loadDashboardStats();
+
+            } catch (err) {
+                console.error(err);
+                showPostMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        async function scheduleTweet() {
+            const text = document.getElementById('tweetText');
+            const imageUrls = document.getElementById('imageUrls');
+            const scheduleDate = document.getElementById('scheduleDate');
+            const scheduleTime = document.getElementById('scheduleTime');
+
+            if (!text || !text.value.trim()) {
+                return showPostMessage('⚠️ Vui lòng nhập nội dung tweet.', 'error');
+            }
+
+            if (!scheduleDate || !scheduleTime || !scheduleDate.value || !scheduleTime.value) {
+                return showPostMessage('⚠️ Vui lòng chọn ngày và giờ đăng.', 'error');
+            }
+
+            const scheduledTime = new Date(`${scheduleDate.value}T${scheduleTime.value}`);
+            if (scheduledTime <= new Date()) {
+                return showPostMessage('⚠️ Thời gian đăng phải trong tương lai.', 'error');
+            }
+
+            try {
+                showPostMessage('📅 Đang lập lịch tweet...', 'success');
+
+                const res = await fetch('/api/twitter/schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text.value,
+                        imageUrls: imageUrls ? imageUrls.value : '',
+                        scheduledTime: scheduledTime.toISOString()
+                    })
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể lập lịch tweet');
+                }
+
+                showPostMessage(`✅ ${data.message}`, 'success');
+                toggleSchedule();
+                
+                // Update dashboard stats
+                loadDashboardStats();
+
+            } catch (err) {
+                console.error(err);
+                showPostMessage('❌ ' + err.message, 'error');
+            }
+        }
+
+        async function postTweet() {
+            const text = document.getElementById('tweetText');
+            const imageUrls = document.getElementById('imageUrls');
+
+            if (!text || !text.value.trim()) {
+                return showPostMessage('⚠️ Vui lòng nhập nội dung tweet.', 'error');
+            }
+            if (text.value.length > 280) {
+                return showPostMessage('⚠️ Tweet không được vượt quá 280 ký tự.', 'error');
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('text', text.value);
+
+                if (imageUrls && imageUrls.value.trim()) {
+                    const urls = imageUrls.value.split('\n')
+                        .map(u => u.trim())
+                        .filter(u => u && u.startsWith('http'))
+                        .slice(0, 4);
+
+                    if (urls.length > 0) {
+                        formData.append('imageUrls', JSON.stringify(urls));
+                    }
+                }
+
+                showPostMessage('⏳ Đang xử lý và đăng tweet...', 'success');
+
+                const res = await fetch('/api/twitter/post', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Không thể đăng tweet');
+                }
+
+                let msg = '✅ Đã đăng tweet thành công!';
+                if (data.imageCount > 0) {
+                    msg = `✅ Đã đăng tweet kèm ${data.imageCount} ảnh thành công!`;
+                }
+                msg += ` (ID: ${data.tweetId})`;
+                showPostMessage(msg, 'success');
+
+                clearAll();
+                
+                // Update dashboard stats
+                loadDashboardStats();
+            } catch (err) {
+                console.error(err);
+                showPostMessage('❌ ' + err.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

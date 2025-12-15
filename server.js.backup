@@ -11,8 +11,6 @@ const cron = require('node-cron');
 const moment = require('moment');
 require('dotenv').config();
 const cheerio = require('cheerio');
-const dataManager = require('./data-manager');
-const schedulerManager = require('./scheduler-manager');
 
 // Removed OpenRouter - now using Google Gemini for AI features
 
@@ -87,7 +85,9 @@ const openai = new OpenAI({
 // OpenRouter API key constant
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
 
-// Note: Scheduling now handled by scheduler-manager.js with file-based persistence
+// Scheduled tweets storage (server-side scheduling since Twitter API v2 doesn't support native scheduling)
+let scheduledTweets = [];
+let scheduledJobs = new Map();
 
 // Helper function to determine MIME type from response or URL
 function getMimeTypeFromResponse(response, url) {
@@ -278,7 +278,7 @@ function parseAndFormatAIContent(rawContent) {
       finalContent += '\n\n#��Ʒ #�Ƽ� #���� #�ղ� #����';
     }
     
-    console.log('?? �������?', {
+    console.log('?? �������:', {
       mainContent,
       linkContent,
       hashtags,
@@ -294,25 +294,182 @@ function parseAndFormatAIContent(rawContent) {
   }
 }
 
-// Removed AI content generation - now using predefined Chinese content only
+// Generate Chinese content based on title using AI
+async function generateChineseContentFromTitle(title) {
+  try {
+    if (!process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY === 'your_openrouter_api_key_here') {
+      throw new Error('Not configured h��nh OpenRouter API key');
+    }
 
-// Note: Old scheduling functions removed - now using scheduler-manager.js
+    const prompt = `���ݱ���"${title}"��������Twitter�ƹ����ݣ�Ҫ��
+
+1. ���ƹ��İ���20-30�֣���Χ�Ʊ������ݣ���1��emoji���������
+2. ����������10-15�֣���������������6868.run
+3. ���ű�ǩ��3���������hashtag
+
+���ϸ����¸�ʽ���أ�ÿ��һ�����ݣ�������������200�֣���
+?? ����ƹ��İ�
+
+?? �������� 6868.run
+
+#��ǩ1 #��ǩ2 #��ǩ3`;
+
+    const completion = await openai.chat.completions.create({
+      model: "anthropic/claude-3-haiku",
+      messages: [
+        {
+          role: "system",
+          content: "����һλרҵ�������罻ý��Ӫ��ר�ң��ó�����Twitter�ƹ����ݡ�����Ҫ���������ƹ��İ���������������������hashtag���������ݡ�"
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_tokens: 100,
+      temperature: 0.7
+    });
+
+    const rawContent = completion.choices[0].message.content.trim();
+    console.log('??AI����ԭʼ����:', rawContent);
+    
+    // Parse and format the AI content properly
+    const formattedContent = parseAndFormatAIContent(rawContent);
+    console.log('??AI��ʽ��������:', formattedContent);
+    
+    return formattedContent;
+  } catch (error) {
+    console.error('? L?i t?o Content required AI:', error);
+    
+    // Fallback to simple template if AI fails
+    return getRandomChineseContent();
+  }
+}
+
+// Schedule tweet function using server-side cron job (Twitter API v2 doesn't support native scheduling)
+function scheduleTweet(tweetData, scheduledTime) {
+  const tweetId = Date.now() + Math.random();
+  
+  // Parse scheduled time
+  const scheduleDate = new Date(scheduledTime);
+  const now = new Date();
+  
+  // Check if time is in the future
+  if (scheduleDate <= now) {
+    console.error('??Th?i gian l?p l?ch ph?i trong t??ng lai:', scheduleDate, 'hi?n t?i:', now);
+    throw new Error('Th?i gian l?p l?ch ph?i trong t??ng lai');
+  }
+  
+  // Create cron format: second minute hour day month dayOfWeek
+  const cronTime = `${scheduleDate.getSeconds()} ${scheduleDate.getMinutes()} ${scheduleDate.getHours()} ${scheduleDate.getDate()} ${scheduleDate.getMonth() + 1} *`;
+  
+  console.log('?? L?p l?ch tweet (server-side):', {
+    id: tweetId,
+    scheduledTime: scheduleDate.toLocaleString('vi-VN'),
+    cronFormat: cronTime,
+    content: tweetData.text.substring(0, 50) + '...',
+    timeUntil: Math.round((scheduleDate.getTime() - now.getTime()) / 1000 / 60) + ' ph��t'
+  });
+
+  // T?o cron job
+  const job = cron.schedule(cronTime, async () => {
+    try {
+      console.log('?? ?ang ??ng tweet theo l?ch:', tweetId, 'v��o l��c:', new Date().toLocaleString('vi-VN'));
+      await postScheduledTweet(tweetData);
+      
+      // X��a job sau khi ho��n th��nh
+      scheduledJobs.delete(tweetId);
+      scheduledTweets = scheduledTweets.filter(t => t.id !== tweetId);
+      console.log('???? ho��n th��nh v�� x��a job:', tweetId);
+      
+    } catch (error) {
+      console.error('??L?i ??ng tweet theo l?ch:', tweetId, error);
+    }
+  }, {
+    scheduled: true, // Start immediately
+    timezone: 'Asia/Ho_Chi_Minh' // Set timezone
+  });
+
+  // L?u th?ng tin
+  const scheduledTweet = {
+    id: tweetId,
+    ...tweetData,
+    scheduledTime: scheduledTime,
+    status: 'scheduled',
+    createdAt: new Date(),
+    cronFormat: cronTime
+  };
+
+  scheduledTweets.push(scheduledTweet);
+  scheduledJobs.set(tweetId, job);
+  
+  console.log('???? t?o cron job th��nh c?ng:', tweetId);
+  
+  return tweetId;
+}
+
+// Post scheduled tweet
+async function postScheduledTweet(tweetData) {
+  const config = await loadConfig();
+  if (!hasTwitterKeys(config)) {
+    throw new Error('Not configured h��nh kh��a Twitter');
+  }
+
+  const client = createTwitterClient(config);
+  let mediaIds = [];
+  
+  // Handle images if any - upload directly without saving
+  if (tweetData.imageUrls && tweetData.imageUrls.length > 0) {
+    for (const url of tweetData.imageUrls.slice(0, 2)) {
+      try {
+        console.log('???ang t?i ?nh t??URL (scheduled):', url);
+        const response = await axios.get(url, {
+          responseType: 'arraybuffer',
+          timeout: 15000,
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          maxContentLength: 5 * 1024 * 1024 // 5MB limit
+        });
+
+        // Validate response
+        if (!response.data || response.data.length === 0) {
+          throw new Error('Empty response data');
+        }
+
+        console.log(`?? ?? t?i ?nh: ${response.data.length} bytes, Content-Type: ${response.headers['content-type']}`);
+
+        // Upload to Twitter
+        const mimeType = getMimeTypeFromResponse(response, url);
+        const mediaId = await uploadImageToTwitter(client, Buffer.from(response.data), mimeType, '(scheduled)');
+        mediaIds.push(mediaId);
+        
+      } catch (error) {
+        console.error('??L?i x??ly ?nh trong tweet l?p l?ch:', error);
+        // Continue with other images if one fails
+      }
+    }
+  }
+
+  // Post tweet
+  const tweetOptions = { text: tweetData.text };
+  if (mediaIds.length > 0) {
+    tweetOptions.media = { media_ids: mediaIds };
+  }
+  
+  const tweet = await client.v2.tweet(tweetOptions);
+  console.log('???? ??ng tweet theo l?ch th��nh c?ng! Tweet ID:', tweet.data.id);
+  
+  return tweet;
+}
 
 
 
 // Fetch page data with titles and images from API
-async function fetchPageDataFromAPI(apiUrl, limit = 10) {
+async function fetchPageDataFromAPI(apiUrl) {
   try {
     console.log('?? ?ang l?y d??li?u t??API:', apiUrl);
     const response = await axios.get(apiUrl, {
       timeout: 10000,
-      headers: { 
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Charset': 'utf-8'
-      },
-      responseType: 'json',
-      responseEncoding: 'utf8'
+      headers: { 'User-Agent': 'Mozilla/5.0' }
     });
     
     console.log('?? C?u tr��c API response:', Object.keys(response.data));
@@ -339,19 +496,10 @@ async function fetchPageDataFromAPI(apiUrl, limit = 10) {
           }
         }
         
-        // 2. Từ art_content (chỉ lấy từ thẻ <img src="...">)
+        // 2. T??art_content (t��m URL ?nh trong Content required)
         if (item.art_content) {
-          try {
-            const $ = cheerio.load(item.art_content);
-            $('img').each((i, el) => {
-              const src = $(el).attr('src');
-              if (src && src.startsWith('http')) {
-                images.push(src);
-              }
-            });
-          } catch (error) {
-            console.log('⚠️ Lỗi parse HTML content:', error.message);
-          }
+          const imgMatches = item.art_content.match(/https?:\/\/[^\s"'<>]+\.(jpg|jpeg|png|gif|webp)/gi) || [];
+          images = images.concat(imgMatches);
         }
         
         // 3. T??c��c field kh��c c�� th??ch?a ?nh
@@ -361,20 +509,10 @@ async function fetchPageDataFromAPI(apiUrl, limit = 10) {
           }
         });
         
-        // Lọc bỏ URL từ window.open() và các pattern không mong muốn
-        images = images.filter(url => {
-          // Loại bỏ URL có chứa window.open pattern
-          if (url.includes('window.open') || url.includes('onclick')) {
-            return false;
-          }
-          // Chỉ giữ URL ảnh hợp lệ
-          return url.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i);
-        });
+        // Lo?i b??duplicate v�� l?y t?i ?a 2 ?nh
+        images = [...new Set(images)].slice(0, 2);
         
-        // Loại bỏ duplicate và lấy tối đa 4 ảnh
-        images = [...new Set(images)].slice(0, 4);
-        
-        console.log(`?? B��i "${title.substring(0, 30)}..." c�� ${images.length} ?nh:`, images.slice(0, 4));
+        console.log(`?? B��i "${title.substring(0, 30)}..." c�� ${images.length} ?nh:`, images.slice(0, 2));
         
         return {
           title: title.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim(),
@@ -389,11 +527,7 @@ async function fetchPageDataFromAPI(apiUrl, limit = 10) {
     console.log('?? ?? l?y ???c', articles.length, 'b��i vi?t');
     console.log('?? B��i vi?t ??u ti��n:', articles[0]?.title, '- S???nh:', articles[0]?.images?.length || 0);
     
-    // Áp dụng limit
-    const limitedArticles = articles.slice(0, limit);
-    console.log(`📋 Giới hạn ${limit} bài viết, trả về ${limitedArticles.length} bài`);
-    
-    return limitedArticles;
+    return articles;
   } catch (error) {
     console.error('??L?i l?y d??li?u t??API:', error);
     throw new Error('Kh?ng th??l?y d??li?u t??API: ' + error.message);
@@ -402,16 +536,7 @@ async function fetchPageDataFromAPI(apiUrl, limit = 10) {
 
 // Fetch first article from an external API URL and extract title + image URLs
 async function fetchFirstArticleFromApi(apiUrl) {
-  const res = await axios.get(apiUrl, { 
-    timeout: 15000,
-    headers: { 
-      'User-Agent': 'Mozilla/5.0',
-      'Accept': 'application/json, text/plain, */*',
-      'Accept-Charset': 'utf-8'
-    },
-    responseType: 'json',
-    responseEncoding: 'utf8'
-  });
+  const res = await axios.get(apiUrl, { timeout: 15000 });
   const body = res.data;
 
   // Try to find an object that contains art_name and art_content
@@ -450,7 +575,7 @@ async function fetchFirstArticleFromApi(apiUrl) {
   // Return title and up to 4 image URLs
   return {
     art_name: artName,
-    imageUrls: imgs.slice(0, 4)
+    imageUrls: imgs.slice(0, 2)
   };
 }
 
@@ -542,35 +667,13 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Dashboard route
-app.get('/dashboard', async (req, res) => {
+app.get('/twitter', async (req, res) => {
   const cfg = await loadConfig();
-  res.render('dashboard', {
-    title: 'Dashboard - Twitter Auto Post',
+  res.render('twitter', {
+    title: 'Qu?n ly Twitter',
+    cfg,
     hasKeys: hasTwitterKeys(cfg)
   });
-});
-
-// Dashboard content routes
-app.get('/dashboard/post-content', async (req, res) => {
-  const cfg = await loadConfig();
-  res.render('post-content', {
-    cfg: cfg,
-    hasKeys: hasTwitterKeys(cfg)
-  });
-});
-
-app.get('/dashboard/settings-content', async (req, res) => {
-  const cfg = await loadConfig();
-  res.render('settings-content', {
-    cfg: cfg,
-    hasKeys: hasTwitterKeys(cfg)
-  });
-});
-
-// Redirect old twitter route to dashboard
-app.get('/twitter', (req, res) => {
-  res.redirect('/dashboard');
 });
 
 app.get('/docx', async (req, res) => {
@@ -668,7 +771,7 @@ app.post('/api/twitter/keys', async (req, res) => {
 // API: Fetch page data with titles and images
 app.post('/api/fetch-page-data', async (req, res) => {
   try {
-    const { apiUrl, limit } = req.body;
+    const { apiUrl } = req.body;
     
     if (!apiUrl || !apiUrl.trim()) {
       return res.status(400).json({ 
@@ -677,17 +780,12 @@ app.post('/api/fetch-page-data', async (req, res) => {
       });
     }
 
-    const articles = await fetchPageDataFromAPI(apiUrl.trim(), limit || 10);
-    
-    // Log API articles to data manager
-    for (const article of articles) {
-      await dataManager.logApiArticle(article.title, article.images.length, apiUrl.trim(), 1, 'PROCESSED');
-    }
+    const articles = await fetchPageDataFromAPI(apiUrl.trim());
     
     res.json({ 
       success: true, 
       articles: articles,
-      message: `📋 Đã lấy ${articles.length}/${limit || 10} bài viết từ API`
+      message: `?? l?y ${articles.length} b��i vi?t t??API`
     });
   } catch (error) {
     res.status(500).json({ 
@@ -697,7 +795,32 @@ app.post('/api/fetch-page-data', async (req, res) => {
   }
 });
 
-// Removed AI content generation endpoint
+// API: Generate Chinese content from title
+app.post('/api/ai/generate-content', async (req, res) => {
+  try {
+    const { title } = req.body;
+    
+    if (!title || title.trim().length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Please provide title' 
+      });
+    }
+
+    const content = await generateChineseContentFromTitle(title.trim());
+    
+    res.json({ 
+      success: true, 
+      content: content,
+      message: '?? t?o Content required AI th��nh c?ng'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
 
 // API: Bulk process 20 articles - fetch, generate AI content, and schedule posts
 app.post('/api/bulk-process', async (req, res) => {
@@ -745,12 +868,12 @@ app.post('/api/bulk-process', async (req, res) => {
       
       try {
         // Generate AI content
-        const aiContent = getRandomChineseContent();
+        const aiContent = await generateChineseContentFromTitle(article.title);
         
         // Prepare tweet data
         const tweetData = {
           text: `${article.title}\n\n${aiContent}`,
-          imageUrls: article.images.slice(0, 4) // Take all 4 images
+          imageUrls: article.images.slice(0, 2) // Take first 2 images
         };
         
         processedArticles.push({
@@ -775,16 +898,15 @@ app.post('/api/bulk-process', async (req, res) => {
           aiContent: fallbackContent,
           tweetData: {
             text: `${article.title}\n\n${fallbackContent}`,
-            imageUrls: article.images.slice(0, 4)
+            imageUrls: article.images.slice(0, 2)
           }
         });
       }
     }
 
-    // Step 3: Schedule posts - 20 bài chia 5 ngày, mỗi ngày 4 bài
-    console.log('📅 Bước 3: Lập lịch đăng bài...');
-    const client = createTwitterClient(config);
-    const scheduleResults = await scheduleArticlesBulk(processedArticles, client);
+    // Step 3: Schedule posts - 20 b��i chia 5 ng��y, m?i ng��y 4 b��i
+    console.log('?? B??c 3: L?p l?ch ??ng b��i...');
+    const scheduleResults = await scheduleArticlesBulk(processedArticles);
     
     res.json({ 
       success: true, 
@@ -807,7 +929,7 @@ app.post('/api/bulk-process', async (req, res) => {
 function getRandomChineseContent() {
   const templates = [
     "?? �����������ݣ���ѡ��������Դ\n\n?? �������� 6868.run\n\n#���� #��ѡ #������",
-    "? ������ذ汾�����廭��������¼\n\n?? ���鶥��Ʒ�� 6868.run\n\n#���� #���?#����",
+    "? ������ذ汾�����廭��������¼\n\n?? ���鶥��Ʒ�� 6868.run\n\n#���� #��� #����",
     "?? VIPר����Դ����Ա������Ȩ����\n\n?? ̽�����ྪϲ 6868.run\n\n#VIP #ר�� #��Ȩ",
     "?? �����Ƽ�ϵ�У�����ǿ���Ƽ�\n\n?? ���ܾ������� 6868.run\n\n#�Ƽ� #�ڱ� #����",
     "?? ��Ʒ�ղرر�����������Ʒ��\n\n?? ���ָ��ྫƷ 6868.run\n\n#��Ʒ #���� #����"
@@ -815,40 +937,53 @@ function getRandomChineseContent() {
   return templates[Math.floor(Math.random() * templates.length)];
 }
 
-// Function to schedule articles in bulk using new scheduler manager
-async function scheduleArticlesBulk(articles, twitterClient) {
+// Function to schedule articles in bulk (5 days, 4 posts per day)
+async function scheduleArticlesBulk(articles) {
   const scheduleResults = [];
+  const postsPerDay = 4;
+  const timeSlots = ['08:00', '12:00', '17:00', '21:00']; // S��ng, tr?a, chi?u, t?i
   
-  try {
-    // Use scheduler manager's auto schedule function
-    const results = await schedulerManager.autoScheduleTweets(articles);
+  // Start from tomorrow
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() + 1);
+  startDate.setHours(0, 0, 0, 0);
+  
+  for (let i = 0; i < articles.length; i++) {
+    const article = articles[i];
+    const dayOffset = Math.floor(i / postsPerDay);
+    const timeSlotIndex = i % postsPerDay;
     
-    for (const result of results) {
-      if (result.success) {
-        scheduleResults.push({
-          articleIndex: scheduleResults.length + 1,
-          title: result.title,
-          scheduledTime: result.scheduledTime,
-          timeSlot: result.timeSlot,
-          day: result.day,
-          tweetId: result.id,
-          imageCount: 0, // Will be set by scheduler manager
-          success: true
-        });
-        console.log(`✅ đã lập lịch bài ${scheduleResults.length}: ${new Date(result.scheduledTime).toLocaleString('vi-VN')} (${result.timeSlot})`);
-      } else {
-        scheduleResults.push({
-          articleIndex: scheduleResults.length + 1,
-          title: result.title,
-          error: result.error,
-          success: false
-        });
-        console.error(`❌ Lỗi lập lịch bài ${scheduleResults.length + 1}:`, result.error);
-      }
+    // Calculate schedule time
+    const scheduleDate = new Date(startDate);
+    scheduleDate.setDate(scheduleDate.getDate() + dayOffset);
+    
+    const [hours, minutes] = timeSlots[timeSlotIndex].split(':').map(Number);
+    scheduleDate.setHours(hours, minutes, 0, 0);
+    
+    try {
+      // Schedule the tweet
+      const tweetId = scheduleTweet(article.tweetData, scheduleDate.toISOString());
+      
+      scheduleResults.push({
+        articleIndex: i + 1,
+        title: article.title.substring(0, 50) + '...',
+        scheduledTime: scheduleDate.toISOString(),
+        timeSlot: timeSlots[timeSlotIndex],
+        day: dayOffset + 1,
+        tweetId: tweetId,
+        imageCount: article.tweetData.imageUrls.length
+      });
+      
+      console.log(`?? ?? l?p l?ch b��i ${i + 1}: ${scheduleDate.toLocaleString('vi-VN')} (${timeSlots[timeSlotIndex]})`);
+      
+    } catch (error) {
+      console.error(`??L?i l?p l?ch b��i ${i + 1}:`, error);
+      scheduleResults.push({
+        articleIndex: i + 1,
+        title: article.title.substring(0, 50) + '...',
+        error: error.message
+      });
     }
-  } catch (error) {
-    console.error('❌ Lỗi bulk scheduling:', error);
-    throw error;
   }
   
   return scheduleResults;
@@ -896,7 +1031,7 @@ app.post('/api/twitter/schedule', async (req, res) => {
       parsedImageUrls = imageUrls.split('\n')
         .map(url => url.trim())
         .filter(url => url && url.startsWith('http'))
-        .slice(0, 4);
+        .slice(0, 2);
     }
 
     const tweetData = {
@@ -904,17 +1039,13 @@ app.post('/api/twitter/schedule', async (req, res) => {
       imageUrls: parsedImageUrls
     };
 
-    // Create Twitter client for scheduler
-    const client = createTwitterClient(config);
-    
-    // Use new scheduler manager
-    const tweetId = await schedulerManager.scheduleNewTweet(tweetData, scheduledTime, client);
+    const tweetId = scheduleTweet(tweetData, scheduledTime);
     
     res.json({ 
       success: true, 
       tweetId: tweetId,
       scheduledTime: scheduledTime,
-      message: `📅 lập lịch tweet (real-time cron) lúc ${moment(scheduledTime).format('DD/MM/YYYY HH:mm')}`
+      message: `?? l?p l?ch tweet (server-side) l��c ${moment(scheduledTime).format('DD/MM/YYYY HH:mm')}`
     });
   } catch (error) {
     console.error('??L?i l?p l?ch tweet:', error);
@@ -925,52 +1056,45 @@ app.post('/api/twitter/schedule', async (req, res) => {
   }
 });
 
-// API: Get scheduled tweets (using new scheduler-manager)
-app.get('/api/twitter/scheduled', async (req, res) => {
-  try {
-    const tweets = await schedulerManager.getActiveScheduledTweets();
-    const formattedTweets = tweets.map(tweet => ({
-      id: tweet.id,
-      text: tweet.text.substring(0, 100) + (tweet.text.length > 100 ? '...' : ''),
-      scheduledTime: tweet.scheduledTime,
-      status: tweet.status,
-      createdAt: tweet.createdAt,
-      imageCount: tweet.imageCount || 0
-    }));
-    
-    res.json({ 
-      success: true, 
-      tweets: formattedTweets 
-    });
-  } catch (error) {
-    console.error('❌ Error getting scheduled tweets:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
-    });
-  }
+// API: Get scheduled tweets (server-side)
+app.get('/api/twitter/scheduled', (req, res) => {
+  const tweets = scheduledTweets.map(tweet => ({
+    id: tweet.id,
+    text: tweet.text.substring(0, 100) + (tweet.text.length > 100 ? '...' : ''),
+    scheduledTime: tweet.scheduledTime,
+    status: tweet.status,
+    createdAt: tweet.createdAt,
+    imageCount: tweet.imageUrls ? tweet.imageUrls.length : 0
+  }));
+  
+  res.json({ 
+    success: true, 
+    tweets: tweets 
+  });
 });
 
-// API: Cancel scheduled tweet (using new scheduler-manager)
-app.delete('/api/twitter/scheduled/:id', async (req, res) => {
+// API: Cancel scheduled tweet (server-side)
+app.delete('/api/twitter/scheduled/:id', (req, res) => {
   try {
     const tweetId = parseInt(req.params.id);
     
-    const success = await schedulerManager.cancelScheduledTweet(tweetId);
-    
-    if (success) {
-      res.json({ 
-        success: true, 
-        message: '✅ hủy lịch đăng tweet' 
-      });
-    } else {
-      res.status(404).json({ 
-        success: false, 
-        error: 'Không tìm thấy tweet đã lập lịch' 
-      });
+    // T��m v�� x��a job
+    const job = scheduledJobs.get(tweetId);
+    if (job) {
+      job.stop();
+      job.destroy();
+      scheduledJobs.delete(tweetId);
+      console.log('?????? h?y job:', tweetId);
     }
+    
+    // X��a kh?i danh s��ch
+    scheduledTweets = scheduledTweets.filter(t => t.id !== tweetId);
+    
+    res.json({ 
+      success: true, 
+      message: '?? h?y l?ch ??ng tweet' 
+    });
   } catch (error) {
-    console.error('❌ Error cancelling scheduled tweet:', error);
     res.status(500).json({ 
       success: false, 
       error: error.message 
@@ -1037,35 +1161,28 @@ app.post('/api/test/image-upload', async (req, res) => {
   }
 });
 
-// API: Debug scheduled jobs (using new scheduler-manager)
-app.get('/api/debug/jobs', async (req, res) => {
-  try {
-    const jobsStatus = schedulerManager.getJobsStatus();
-    const scheduledTweets = await schedulerManager.getActiveScheduledTweets();
-    
-    const jobsInfo = scheduledTweets.map(tweet => ({
-      tweetId: tweet.id,
-      scheduledTime: tweet.scheduledTime,
-      status: tweet.status,
-      content: tweet.text.substring(0, 50) + '...',
-      imageCount: tweet.imageCount || 0
-    }));
-    
-    res.json({
-      success: true,
-      totalJobs: jobsStatus.totalJobs,
-      totalTweets: scheduledTweets.length,
-      currentTime: new Date().toLocaleString('vi-VN'),
-      jobs: jobsInfo,
-      activeJobs: jobsStatus.activeJobs
+// API: Debug scheduled jobs
+app.get('/api/debug/jobs', (req, res) => {
+  const jobsInfo = [];
+  
+  scheduledJobs.forEach((job, tweetId) => {
+    const tweet = scheduledTweets.find(t => t.id === tweetId);
+    jobsInfo.push({
+      tweetId: tweetId,
+      scheduledTime: tweet ? tweet.scheduledTime : 'Unknown',
+      cronFormat: tweet ? tweet.cronFormat : 'Unknown',
+      status: job.running ? 'Running' : 'Stopped',
+      content: tweet ? tweet.text.substring(0, 50) + '...' : 'Unknown'
     });
-  } catch (error) {
-    console.error('❌ Error getting debug jobs info:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
+  });
+  
+  res.json({
+    success: true,
+    totalJobs: scheduledJobs.size,
+    totalTweets: scheduledTweets.length,
+    currentTime: new Date().toLocaleString('vi-VN'),
+    jobs: jobsInfo
+  });
 });
 
 // API: Auto schedule 20 posts with fixed time slots
@@ -1126,7 +1243,7 @@ app.post('/api/auto-schedule-20-fixed', async (req, res) => {
       
       try {
         // Generate AI content
-        const aiContent = getRandomChineseContent();
+        const aiContent = await generateChineseContentFromTitle(article.title);
         
         // Calculate schedule time - fixed pattern
         const dayOffset = Math.floor(i / 4); // 4 posts per day
@@ -1141,12 +1258,11 @@ app.post('/api/auto-schedule-20-fixed', async (req, res) => {
         // Prepare tweet data
         const tweetData = {
           text: `${article.title}\n\n${aiContent}`,
-          imageUrls: article.images.slice(0, 4) // Take first 4 images
+          imageUrls: article.images.slice(0, 2) // Take first 4 images
         };
         
-        // Schedule the tweet using new scheduler manager
-        const client = createTwitterClient(config);
-        const tweetId = await schedulerManager.scheduleNewTweet(tweetData, scheduleDate.toISOString(), client);
+        // Schedule the tweet
+        const tweetId = scheduleTweet(tweetData, scheduleDate.toISOString());
         
         scheduleResults.push({
           articleIndex: i + 1,
@@ -1250,7 +1366,7 @@ app.post('/api/auto-schedule-20', async (req, res) => {
       
       try {
         // Generate AI content
-        const aiContent = getRandomChineseContent();
+        const aiContent = await generateChineseContentFromTitle(article.title);
         
         // Calculate schedule time
         const dayOffset = Math.floor(i / postsPerDay);
@@ -1265,12 +1381,11 @@ app.post('/api/auto-schedule-20', async (req, res) => {
         // Prepare tweet data
         const tweetData = {
           text: `${article.title}\n\n${aiContent}`,
-          imageUrls: article.images.slice(0, 4) // Take first 4 images
+          imageUrls: article.images.slice(0, 2) // Take first 4 images
         };
         
-        // Schedule the tweet using new scheduler manager
-        const client = createTwitterClient(config);
-        const tweetId = await schedulerManager.scheduleNewTweet(tweetData, scheduleDate.toISOString(), client);
+        // Schedule the tweet
+        const tweetId = scheduleTweet(tweetData, scheduleDate.toISOString());
         
         scheduleResults.push({
           articleIndex: i + 1,
@@ -1373,7 +1488,7 @@ app.post('/api/twitter/post', upload.array('images', 4), async (req, res) => {
         const urls = JSON.parse(imageUrls);
         console.log('?? Danh s��ch URL ?nh:', urls);
 
-        for (const url of urls.slice(0, 4)) { // Upload all 4 images
+        for (const url of urls.slice(0, 2)) { // Limit to 2 images
           console.log('???ang t?i ?nh t??URL (main):', url);
           
           try {
@@ -1440,29 +1555,26 @@ app.post('/api/twitter/post', upload.array('images', 4), async (req, res) => {
     
     console.log('?? ?ang ??ng tweet l��n Twitter...');
     const tweet = await client.v2.tweet(tweetOptions);
-    console.log('✅ đăng tweet thành công! Tweet ID:', tweet.data.id);
-    
-    // Log posted tweet to data manager
-    await dataManager.logPostedTweet(tweet.data.id, text, mediaIds.length, 'SUCCESS');
+    console.log('???? ??ng tweet th��nh c?ng! Tweet ID:', tweet.data.id);
     
     // Clean up uploaded files only (no downloaded files to clean)
-    console.log('🧹 đang xóa các file đã upload...');
+    console.log('?????ang x��a c��c file ?? upload...');
     for (const file of uploadedFiles) {
       try {
         await fs.unlink(file.path);
-        console.log('✅ đã xóa file upload:', path.basename(file.path));
+        console.log('???? x��a file upload:', path.basename(file.path));
       } catch (e) {
-        console.warn('⚠️ Không thể xóa file upload:', e.message);
+        console.warn('?? Kh?ng th??x��a file upload:', e.message);
       }
     }
-    console.log('✅ Hoàn tất! Không cần tải file tạm.');
+    console.log('?? Ho��n t?t! Kh?ng c?n t?i file t?m.');
     
     res.json({ 
       success: true, 
       tweetId: tweet.data.id,
       message: mediaIds.length > 0 
-        ? `✅ đăng tweet kèm ${mediaIds.length} ảnh thành công`
-        : '✅ đăng tweet thành công',
+        ? `?? ??ng tweet k��m ${mediaIds.length} ?nh th��nh c?ng`
+        : '?? ??ng tweet th��nh c?ng',
       imageCount: mediaIds.length
     });
   } catch (error) {
@@ -1537,7 +1649,7 @@ app.post('/external/post-first', async (req, res) => {
     // Upload images directly to Twitter without saving to disk
     const mediaIds = [];
 
-    for (const url of (article.imageUrls || []).slice(0, 4)) {
+    for (const url of (article.imageUrls || []).slice(0, 2)) {
       try {
         console.log('???ang upload ?nh tr?c ti?p t??URL (external):', url);
         const response = await axios.get(url, { 
@@ -1572,16 +1684,7 @@ app.post('/external/post-first', async (req, res) => {
 
 // Fetch multiple articles from API (tries to find array of objects with art_name + art_content)
 async function fetchArticlesFromApi(apiUrl, limit = 20) {
-  const res = await axios.get(apiUrl, { 
-    timeout: 15000,
-    headers: { 
-      'User-Agent': 'Mozilla/5.0',
-      'Accept': 'application/json, text/plain, */*',
-      'Accept-Charset': 'utf-8'
-    },
-    responseType: 'json',
-    responseEncoding: 'utf8'
-  });
+  const res = await axios.get(apiUrl, { timeout: 15000 });
   const body = res.data;
 
   const results = [];
@@ -1592,7 +1695,7 @@ async function fetchArticlesFromApi(apiUrl, limit = 20) {
       const $ = cheerio.load(obj.art_content || '');
       const imgs = [];
       $('img').each((i, el) => { const src = $(el).attr('src'); if (src) imgs.push(src); });
-      results.push({ art_name: obj.art_name, art_content: obj.art_content, imageUrls: imgs.slice(0, 4) });
+      results.push({ art_name: obj.art_name, art_content: obj.art_content, imageUrls: imgs.slice(0, 2) });
       return;
     }
     for (const k of Object.keys(obj)) {
@@ -1706,7 +1809,7 @@ async function postArticleToTwitter(article, config, options = {}) {
 
   const mediaIds = [];
 
-  for (const url of (article.imageUrls || []).slice(0, 4)) {
+  for (const url of (article.imageUrls || []).slice(0, 2)) {
     try {
       console.log('???ang upload ?nh tr?c ti?p t??URL (postArticleToTwitter):', url);
       const response = await axios.get(url, { 
@@ -1770,285 +1873,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Cache for Twitter account info (5 minutes)
-let twitterAccountCache = null;
-let twitterAccountCacheTime = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-// API: Twitter Account Info (with caching and rate limit handling)
-app.get('/api/twitter/account-info', async (req, res) => {
-  try {
-    // Check cache first
-    const now = Date.now();
-    if (twitterAccountCache && (now - twitterAccountCacheTime) < CACHE_DURATION) {
-      console.log('📋 Sử dụng cache cho Twitter account info');
-      return res.json(twitterAccountCache);
-    }
-
-    console.log('🔍 Đang lấy thông tin Twitter account...');
-    const config = await loadConfig();
-    
-    if (!hasTwitterKeys(config)) {
-      console.log('❌ Twitter API keys chưa được cấu hình');
-      const errorResponse = {
-        success: false,
-        error: 'Twitter API keys chưa được cấu hình'
-      };
-      return res.json(errorResponse);
-    }
-
-    console.log('✅ Twitter API keys đã có, tạo client...');
-    const client = createTwitterClient(config);
-    
-    // Get current user info
-    console.log('📡 Gọi Twitter API v2.me...');
-    const user = await client.v2.me({
-      'user.fields': ['public_metrics', 'username', 'name']
-    });
-    
-    console.log('📊 Kết quả từ Twitter API:', user);
-    
-    if (user.data) {
-      const accountInfo = {
-        success: true,
-        username: user.data.username,
-        name: user.data.name,
-        followers: user.data.public_metrics?.followers_count || 0,
-        following: user.data.public_metrics?.following_count || 0,
-        tweets: user.data.public_metrics?.tweet_count || 0,
-        listed: user.data.public_metrics?.listed_count || 0
-      };
-      
-      // Cache the result
-      twitterAccountCache = accountInfo;
-      twitterAccountCacheTime = now;
-      
-      console.log('✅ Thông tin account:', accountInfo);
-      res.json(accountInfo);
-    } else {
-      console.log('❌ Không có user.data');
-      const errorResponse = {
-        success: false,
-        error: 'Không thể lấy thông tin account'
-      };
-      res.json(errorResponse);
-    }
-  } catch (error) {
-    console.error('❌ Lỗi lấy thông tin Twitter account:', error);
-    
-    // Handle rate limit specifically
-    if (error.code === 429 || (error.data && error.data.status === 429)) {
-      console.log('⏰ Twitter API rate limit - sử dụng dữ liệu cache nếu có');
-      
-      // If we have cached data, use it even if expired
-      if (twitterAccountCache) {
-        return res.json({
-          ...twitterAccountCache,
-          cached: true,
-          note: 'Dữ liệu từ cache do rate limit'
-        });
-      }
-      
-      // Return rate limit error
-      return res.json({
-        success: false,
-        error: 'Twitter API rate limit - vui lòng thử lại sau',
-        rateLimited: true
-      });
-    }
-    
-    res.json({
-      success: false,
-      error: error.message || 'Lỗi kết nối Twitter API'
-    });
-  }
-});
-
-// API: Dashboard statistics
-app.get('/api/dashboard/stats', async (req, res) => {
-  try {
-    const stats = {
-      totalTweets: 0,
-      todayTweets: 0,
-      scheduledTweets: 0,
-      apiArticles: 0,
-      recentActivity: []
-    };
-
-    // Use data-manager for statistics
-    try {
-      console.log('📊 Đang lấy thống kê dashboard...');
-      
-      stats.totalTweets = await dataManager.getTotalTweetsCount();
-      console.log('📊 Total tweets:', stats.totalTweets);
-      
-      stats.todayTweets = await dataManager.getTodayTweetsCount();
-      console.log('📊 Today tweets:', stats.todayTweets);
-      
-      stats.scheduledTweets = await dataManager.getScheduledTweetsCount();
-      console.log('📊 Scheduled tweets:', stats.scheduledTweets);
-      
-      stats.apiArticles = await dataManager.getApiArticlesCount();
-      console.log('📊 API articles:', stats.apiArticles);
-      
-      stats.recentActivity = await dataManager.getRecentActivity(5);
-      console.log('📊 Recent activity count:', stats.recentActivity.length);
-      
-    } catch (error) {
-      console.error('❌ Lỗi lấy dữ liệu thống kê:', error);
-    }
-
-    console.log('📊 Final stats:', stats);
-    res.json(stats);
-  } catch (error) {
-    console.error('❌ Lỗi lấy thống kê dashboard:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// API: Test Twitter account info with mock data
-app.get('/api/test/twitter-account', (req, res) => {
-  res.json({
-    success: true,
-    username: 'PornHub_91Porn',
-    name: '91PORN · PORNHUB APP下载',
-    followers: 15,
-    following: 57,
-    tweets: 93,
-    listed: 0,
-    mock: true
-  });
-});
-
-// API: Create test scheduled tweet
-app.post('/api/test/schedule-tweet', async (req, res) => {
-  try {
-    const config = await loadConfig();
-    if (!hasTwitterKeys(config)) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Twitter API keys chưa được cấu hình' 
-      });
-    }
-
-    // Create a test tweet scheduled for 1 minute from now
-    const scheduledTime = new Date();
-    scheduledTime.setMinutes(scheduledTime.getMinutes() + 1);
-
-    const tweetData = {
-      text: 'Test tweet - sẽ được đăng sau 1 phút (có thể hủy)',
-      imageUrls: []
-    };
-
-    const client = createTwitterClient(config);
-    const tweetId = await schedulerManager.scheduleNewTweet(tweetData, scheduledTime.toISOString(), client);
-    
-    res.json({ 
-      success: true, 
-      tweetId: tweetId,
-      scheduledTime: scheduledTime.toISOString(),
-      message: `✅ Đã tạo test tweet lập lịch sau 1 phút (ID: ${tweetId})`
-    });
-  } catch (error) {
-    console.error('❌ Error creating test scheduled tweet:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message 
-    });
-  }
-});
-
-// API: Debug data files
-app.get('/api/debug/data', async (req, res) => {
-  try {
-    const postedTweets = await dataManager.getPostedTweets(10);
-    const scheduledTweets = await dataManager.getScheduledTweets();
-    const apiArticles = await dataManager.getApiArticles(10);
-    
-    res.json({
-      success: true,
-      postedTweets: postedTweets,
-      scheduledTweets: scheduledTweets,
-      apiArticles: apiArticles,
-      counts: {
-        totalTweets: await dataManager.getTotalTweetsCount(),
-        todayTweets: await dataManager.getTodayTweetsCount(),
-        scheduledTweets: await dataManager.getScheduledTweetsCount(),
-        apiArticles: await dataManager.getApiArticlesCount()
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// API: Get posted tweets list
-app.get('/api/tweets/posted', async (req, res) => {
-  try {
-    const limit = parseInt(req.query.limit) || 50;
-    const tweets = await dataManager.getPostedTweets(limit);
-    
-    const formattedTweets = tweets.map(tweet => ({
-      id: tweet.tweetId,
-      content: tweet.content.substring(0, 100) + (tweet.content.length > 100 ? '...' : ''),
-      fullContent: tweet.content,
-      imageCount: tweet.imageCount,
-      status: tweet.status ? tweet.status.trim() : 'UNKNOWN',
-      timestamp: tweet.timestamp,
-      timeFormatted: new Date(tweet.timestamp).toLocaleString('vi-VN'),
-      isToday: new Date(tweet.timestamp).toDateString() === new Date().toDateString()
-    }));
-    
-    const stats = {
-      total: formattedTweets.length,
-      success: formattedTweets.filter(t => t.status === 'SUCCESS').length,
-      today: formattedTweets.filter(t => t.isToday && t.status === 'SUCCESS').length
-    };
-    
-    res.json({
-      success: true,
-      tweets: formattedTweets,
-      stats: stats
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// API: Get scheduled tweets list  
-app.get('/api/tweets/scheduled', async (req, res) => {
-  try {
-    const tweets = await schedulerManager.getActiveScheduledTweets();
-    
-    const formattedTweets = tweets.map(tweet => ({
-      id: tweet.id,
-      content: tweet.text.substring(0, 100) + (tweet.text.length > 100 ? '...' : ''),
-      fullContent: tweet.text,
-      imageCount: tweet.imageCount || 0,
-      status: tweet.status,
-      scheduledTime: tweet.scheduledTime,
-      scheduledTimeFormatted: new Date(tweet.scheduledTime).toLocaleString('vi-VN'),
-      createdAt: tweet.createdAt,
-      isUpcoming: new Date(tweet.scheduledTime) > new Date()
-    }));
-    
-    const stats = {
-      total: formattedTweets.length,
-      pending: formattedTweets.filter(t => t.status === 'PENDING').length,
-      upcoming: formattedTweets.filter(t => t.isUpcoming).length
-    };
-    
-    res.json({
-      success: true,
-      tweets: formattedTweets,
-      stats: stats
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// 404 handler (must be last)
+// 404 handler
 app.use((req, res) => {
   res.status(404).send(`
     <!DOCTYPE html>
@@ -2063,17 +1888,16 @@ app.use((req, res) => {
     <body>
       <h1>404 - Page Not Found</h1>
       <p>The page you're looking for doesn't exist.</p>
-      <a href="/">Go to Home</a> | <a href="/dashboard">Dashboard</a>
+      <a href="/">Go to Home</a> | <a href="/twitter">Twitter Manager</a>
     </body>
     </html>
   `);
 });
 
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server đang chạy tại port ${PORT}`);
-  console.log(`📱 Dashboard: http://localhost:${PORT}/dashboard`);
-  console.log(`📄 DOCX: http://localhost:${PORT}/docx`);
-  console.log(`📊 Data files: ./data/`);
+  console.log(`?? Server ?ang ch?y t?i port ${PORT}`);
+  console.log(`?? Qu?n ly Twitter: /twitter`);
+  console.log(`?? Xem DOCX: /docx`);
   console.log(`?? Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
